@@ -1,0 +1,30 @@
+spring:
+  datasource:
+    url: jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1
+    driver-class-name: org.h2.Driver
+    username: sa
+    password: '' # Opcional: deja la contraseña en blanco si no tienes una
+  jpa:
+    hibernate:
+      ddl-auto: none # Hibernate no gestionará el esquema, usaremos schema.sql
+    database-platform: org.hibernate.dialect.H2Dialect
+  sql:
+    init:
+      mode: always # Siempre inicializar la BD desde los scripts
+      schema-locations: classpath:schema.sql
+      data-locations: classpath:data.sql
+  h2:
+    console:
+      enabled: true
+      path: /h2-console
+
+logging:
+  level:
+    root: debug
+    org.springframework.web: debug
+    org.springframework.security: debug
+    org.hibernate.SQL: debug
+
+jwt:
+  secret: Q2hC+GvzK3oB9Nn5S5XId6VJbhvH3KJ4FhRqK7/lTlc=
+  expiration: 86400 # 1 día en segundos
