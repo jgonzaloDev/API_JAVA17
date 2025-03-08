@@ -1,33 +1,33 @@
 package com.silmaur.shop.model;
 
-import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.hibernate.annotations.CreationTimestamp;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.relational.core.mapping.Column;
+import org.springframework.data.relational.core.mapping.Table;
+
 import java.time.LocalDateTime;
 
-@Entity
-@Table(name = "users")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
+@Builder
+@Table("users")
 public class User {
-
   @Id
-  @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Long id;
 
-  @Column(nullable = false, unique = true, length = 50)
+  @Column("username")
   private String username;
 
-  @Column(nullable = false)
+  @Column("password")
   private String password;
 
-  @ManyToOne
-  @JoinColumn(name = "role_id", nullable = false)
-  private Role role;
+  @Column("role_id")
+  private Long roleId; // Cambiado a Long
 
-  @CreationTimestamp
+  @Column("created_at")
   private LocalDateTime createdAt;
 }

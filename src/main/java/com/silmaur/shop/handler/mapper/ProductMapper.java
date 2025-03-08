@@ -16,7 +16,7 @@ import org.mapstruct.NullValuePropertyMappingStrategy;
 )
 public interface ProductMapper {
 
-  // Mapea DTO a Entity, asegurando que los atributos coincidan correctamente
+  // Mapea DTO a Entity
   @Mappings({
       @Mapping(target = "id", ignore = true), // Ignora el ID para mantener el existente
       @Mapping(target = "name", source = "name"),
@@ -24,13 +24,14 @@ public interface ProductMapper {
       @Mapping(target = "salePrice", source = "salePrice"),
       @Mapping(target = "stock", source = "stock"),
       @Mapping(target = "minStock", source = "minStock"),
-      @Mapping(target = "category.id", source = "categoryId"), // Mapea categoryId a category
+      // En lugar de "category.id", mapea directamente a "categoryId"
+      @Mapping(target = "categoryId", source = "categoryId"),
       @Mapping(target = "createdAt", ignore = true), // No sobrescribir fecha de creación
-      @Mapping(target = "updatedAt", ignore = true)  // Se maneja en @PreUpdate
+      @Mapping(target = "updatedAt", ignore = true)  // Se maneja en @PreUpdate o manualmente
   })
   Product toEntity(ProductDTO dto);
 
-  // Mapea Entity a DTO, asegurando que los atributos coincidan
+  // Mapea Entity a DTO
   @Mappings({
       @Mapping(target = "id", source = "id"),
       @Mapping(target = "name", source = "name"),
@@ -38,16 +39,16 @@ public interface ProductMapper {
       @Mapping(target = "salePrice", source = "salePrice"),
       @Mapping(target = "stock", source = "stock"),
       @Mapping(target = "minStock", source = "minStock"),
-      @Mapping(target = "categoryId", source = "category.id") // Mapea category a categoryId
+      // Mapea directamente "categoryId" de la entidad al DTO
+      @Mapping(target = "categoryId", source = "categoryId")
   })
   ProductDTO toDTO(Product entity);
 
-  // Método para actualizar una entidad existente desde un DTO sin sobrescribir ID ni fechas
+  // Actualiza una entidad existente a partir del DTO sin sobrescribir ID ni fechas
   @Mappings({
       @Mapping(target = "id", ignore = true),
-      @Mapping(target = "createdAt", ignore = true), // No modificar la fecha de creación
-      @Mapping(target = "updatedAt", ignore = true)  // Se manejará en @PreUpdate
+      @Mapping(target = "createdAt", ignore = true),
+      @Mapping(target = "updatedAt", ignore = true)
   })
   void updateProductFromDTO(ProductDTO dto, @MappingTarget Product entity);
 }
-

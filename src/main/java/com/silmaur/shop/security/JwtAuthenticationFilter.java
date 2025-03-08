@@ -1,54 +1,59 @@
 package com.silmaur.shop.security;
 
-import jakarta.servlet.FilterChain;
-import jakarta.servlet.ServletException;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UserDetailsService;
+import java.util.Optional;
+import org.springframework.http.server.reactive.ServerHttpRequest;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.ReactiveSecurityContextHolder;
+import org.springframework.security.core.userdetails.ReactiveUserDetailsService;
 import org.springframework.stereotype.Component;
-import org.springframework.web.filter.OncePerRequestFilter;
-
-import java.io.IOException;
-import java.util.Optional;
+import org.springframework.web.server.ServerWebExchange;
+import org.springframework.web.server.WebFilter;
+import org.springframework.web.server.WebFilterChain;
+import reactor.core.publisher.Mono;
 
 @Component
-public class JwtAuthenticationFilter extends OncePerRequestFilter {
+public class JwtAuthenticationFilter implements WebFilter {
 
   private final JwtProvider jwtProvider;
-  private final UserDetailsService userDetailsService;
+  private final ReactiveUserDetailsService userDetailsService;
 
-  public JwtAuthenticationFilter(JwtProvider jwtProvider, UserDetailsService userDetailsService) {
+  public JwtAuthenticationFilter(JwtProvider jwtProvider, ReactiveUserDetailsService userDetailsService) {
     this.jwtProvider = jwtProvider;
     this.userDetailsService = userDetailsService;
   }
 
   @Override
-  protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
-      throws ServletException, IOException {
-    String token = getTokenFromRequest(request);
+  public Mono<Void> filter(ServerWebExchange exchange, WebFilterChain chain) {
+    String token = getTokenFromRequest(exchange.getRequest());
 
-    Optional<String> usernameOpt = token != null ? jwtProvider.extractUsername(token) : Optional.empty();
+    return Mono.justOrEmpty(token) // ✅ Manejamos el token de forma reactiva
+        .filter(jwtProvider::validateToken) // ✅ Filtra solo tokens válidos
+        .flatMap(validToken -> Mono.justOrEmpty(jwtProvider.extractUsername(validToken))) // ✅ Extrae Optional<String> y lo envuelve en Mono<Optional<String>>
+        .flatMap(Mono::justOrEmpty) // ✅ Convierte Mono<Optional<String>> en Mono<String>
+        .flatMap(userDetailsService::findByUsername) // ✅ Busca el usuario en la BD
+        .flatMap(userDetails -> {
+          Authentication auth = new UsernamePasswordAuthenticationToken(
+              userDetails, null, userDetails.getAuthorities());
 
-    if (usernameOpt.isPresent() && SecurityContextHolder.getContext().getAuthentication() == null) {
-      UserDetails userDetails = userDetailsService.loadUserByUsername(usernameOpt.get());
-
-      if (jwtProvider.validateToken(token, userDetails.getUsername())) {
-        Authentication authentication = new UsernamePasswordAuthenticationToken(
-            userDetails, null, userDetails.getAuthorities()
-        );
-        SecurityContextHolder.getContext().setAuthentication(authentication);
-      }
-    }
-
-    filterChain.doFilter(request, response);
+          return chain.filter(exchange)
+              .contextWrite(ReactiveSecurityContextHolder.withAuthentication(auth)); // ✅ Guarda la autenticación en el contexto de seguridad reactivo
+        })
+        .switchIfEmpty(chain.filter(exchange)); // ✅ Si no hay usuario válido, continúa sin autenticación
   }
 
-  private String getTokenFromRequest(HttpServletRequest request) {
-    String bearerToken = request.getHeader("Authorization");
-    return (bearerToken != null && bearerToken.startsWith("Bearer ")) ? bearerToken.substring(7) : null;
+
+
+
+
+
+
+
+
+  private String getTokenFromRequest(ServerHttpRequest request) {
+    String bearerToken = request.getHeaders().getFirst("Authorization");
+    return (bearerToken != null && bearerToken.startsWith("Bearer "))
+        ? bearerToken.substring(7)
+        : null;
   }
 }

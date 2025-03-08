@@ -1,18 +1,14 @@
 package com.silmaur.shop.service;
 
 import com.silmaur.shop.dto.CategoryDto;
-import com.silmaur.shop.dto.ProductDTO;
 import com.silmaur.shop.model.Category;
-import com.silmaur.shop.model.Product;
-import io.reactivex.rxjava3.core.Completable;
-import io.reactivex.rxjava3.core.Single;
+import reactor.core.publisher.Mono;
 import java.util.List;
 
 public interface CategoryService {
-  Single<Category> createCategory(CategoryDto categoryDto);
-  Single<Category> getCategoryById(String id);
-  Single<List<Category>> getAllCategories();
-  Single<Category> updateCategory(String id, CategoryDto categoryDto);
-  Completable deleteCategory(String id);
-
+  Mono<Category> createCategory(CategoryDto categoryDto);
+  Mono<Category> getCategoryById(String id);
+  Mono<List<Category>> getAllCategories();
+  Mono<Category> updateCategory(String id, CategoryDto categoryDto);
+  Mono<Void> deleteCategory(String id);
 }

@@ -7,87 +7,76 @@ import com.silmaur.shop.handler.mapper.ProductMapper;
 import com.silmaur.shop.model.Product;
 import com.silmaur.shop.repository.ProductRepository;
 import com.silmaur.shop.service.ProductService;
-import io.reactivex.rxjava3.core.Completable;
-import io.reactivex.rxjava3.core.Single;
-import java.util.Comparator;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
+import reactor.core.publisher.Mono;
 
 import java.time.LocalDateTime;
+import java.util.Comparator;
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
 @AllArgsConstructor
 public class ProductServiceImpl implements ProductService {
+
   private final ProductMapper productMapper;
   private final ProductRepository productRepository;
 
   @Override
-  public Single<Product> createProduct(ProductDTO productDTO) {
-    return Single.fromCallable(() -> {
-      Product product = productMapper.toEntity(productDTO);
-
-      // Verificar si el producto ya existe por nombre
-      if (productRepository.findByName(product.getName()).isPresent()) {
-        throw new ProductAlreadyExistsException("El producto con el nombre " + product.getName() + " ya existe");
-      }
-
-      // Generar un ID personalizado
-      String customId = generateCustomId(product.getName());
-      product.setId(customId);
-
-      // Asignar la fecha de creación
-      product.setCreatedAt(LocalDateTime.now());
-      product.setUpdatedAt(LocalDateTime.now());
-
-      return productRepository.save(product);
-    });
+  public Mono<Product> createProduct(ProductDTO productDTO) {
+    // Convertir el DTO a entidad
+    Product product = productMapper.toEntity(productDTO);
+    // Verificar si ya existe un producto con el mismo nombre
+    return productRepository.findByName(product.getName())
+        .flatMap(existing ->
+            Mono.<Product>error(new ProductAlreadyExistsException("El producto con el nombre "
+                + product.getName() + " ya existe"))
+        )
+        .switchIfEmpty(
+            Mono.defer(() -> {
+              String customId = generateCustomId(product.getName());
+              product.setId(customId);
+              product.setCreatedAt(LocalDateTime.now());
+              product.setUpdatedAt(LocalDateTime.now());
+              return productRepository.save(product);
+            })
+        );
   }
 
   @Override
-  public Single<Product> getProductById(String id) {
-    return Single.fromCallable(() -> productRepository.findById(id)
-        .orElseThrow(() -> new ProductNotFoundException("Producto no encontrado con ID: " + id)));
+  public Mono<Product> getProductById(String id) {
+    return productRepository.findById(id)
+        .switchIfEmpty(Mono.error(new ProductNotFoundException("Producto no encontrado con ID: " + id)));
   }
 
   @Override
-  public Single<List<Product>> getAllProducts() {
-    return Single.fromCallable(() ->
-        productRepository.findAll().stream()
-            .sorted((p1, p2) -> p1.getName().compareToIgnoreCase(p2.getName()))
-            .collect(Collectors.toList())
-    );
+  public Mono<List<Product>> getAllProducts() {
+    return productRepository.findAll()
+        .collectList()
+        .map(list -> list.stream()
+            .sorted(Comparator.comparing(p -> p.getName().toLowerCase()))
+            .collect(Collectors.toList()));
   }
 
-
   @Override
-  public Completable deleteProduct(String id) {
-    return Completable.fromAction(() ->
-        productRepository.findById(id)
-            .ifPresentOrElse(
-                productRepository::delete,
-                () -> { throw new ProductNotFoundException("Producto no encontrado con ID: " + id); }
-            )
-    );
+  public Mono<Void> deleteProduct(String id) {
+    return productRepository.findById(id)
+        .switchIfEmpty(Mono.error(new ProductNotFoundException("Producto no encontrado con ID: " + id)))
+        .flatMap(productRepository::delete);
   }
 
-
-
-
   @Override
-  public Single<Product> updateProduct(String id, ProductDTO productDTO) {
-    return Single.fromCallable(() -> productRepository.findById(id)
-            .orElseThrow(() -> new ProductNotFoundException("Producto no encontrado con ID: " + id)))
-        .map(existingProduct -> {
-          // Usar el mapper para actualizar los valores sin sobrescribir ID ni fechas
+  public Mono<Product> updateProduct(String id, ProductDTO productDTO) {
+    return productRepository.findById(id)
+        .switchIfEmpty(Mono.error(new ProductNotFoundException("Producto no encontrado con ID: " + id)))
+        .flatMap(existingProduct -> {
+          // Actualiza los valores sin sobrescribir ID ni fecha de creación
           productMapper.updateProductFromDTO(productDTO, existingProduct);
-          existingProduct.setUpdatedAt(LocalDateTime.now()); // Registrar la actualización
+          existingProduct.setUpdatedAt(LocalDateTime.now());
           return productRepository.save(existingProduct);
         });
   }
-
 
   private String generateCustomId(String productName) {
     String prefix = productName.substring(0, 3).toUpperCase();

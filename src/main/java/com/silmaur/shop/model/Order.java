@@ -1,68 +1,56 @@
 package com.silmaur.shop.model;
 
-import com.silmaur.shop.model.enums.OrderStatus;
-import jakarta.persistence.CascadeType;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.OneToMany;
-import jakarta.persistence.Table;
-import java.math.BigDecimal;
-import java.time.LocalDateTime;
-import java.util.List;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.hibernate.annotations.CreationTimestamp;
-import org.hibernate.annotations.UpdateTimestamp;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.relational.core.mapping.Column;
+import org.springframework.data.relational.core.mapping.Table;
 
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
 
-@Entity
-@Table(name = "orders")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
+@Builder
+@Table("orders")
 public class Order {
   @Id
-  @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Long id;
 
-  @ManyToOne
-  @JoinColumn(name = "customer_id", nullable = false)
-  private Customer customer;
+  // Se almacena el ID del cliente
+  @Column("customer_id")
+  private Long customerId;
 
-  @ManyToOne
-  @JoinColumn(name = "campaign_id")
-  private Campaign campaign;
+  // Se almacena el ID de la campaña (opcional)
+  @Column("campaign_id")
+  private Long campaignId;
 
-  @ManyToOne
-  @JoinColumn(name = "live_session_id")
-  private LiveSession liveSession;
+  // Se almacena el ID de la sesión en vivo (opcional)
+  @Column("live_session_id")
+  private Long liveSessionId;
 
-  @Column(nullable = false)
+  @Column("apertura")
   private BigDecimal apertura;
 
-  @Column(nullable = false)
+  @Column("total_amount")
   private BigDecimal totalAmount;
 
-  @Enumerated(EnumType.STRING)
-  @Column(nullable = false)
-  private OrderStatus status;
+  // El status se almacena como VARCHAR (valores 'PAGADO' o 'NO_PAGADO')
+  @Column("status")
+  private String status;
 
-  @Column(nullable = false)
+  @Column("acumulando")
   private boolean acumulando;
 
+  @Column("payment_due_date")
   private LocalDateTime paymentDueDate;
 
-  @CreationTimestamp
+  @Column("created_at")
   private LocalDateTime createdAt;
 
-  @UpdateTimestamp
+  @Column("updated_at")
   private LocalDateTime updatedAt;
 }

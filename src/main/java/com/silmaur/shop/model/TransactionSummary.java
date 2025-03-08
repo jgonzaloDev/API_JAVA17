@@ -1,38 +1,41 @@
 package com.silmaur.shop.model;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
-import java.math.BigDecimal;
-import java.time.LocalDateTime;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.relational.core.mapping.Column;
+import org.springframework.data.relational.core.mapping.Table;
 
-@Entity
-@Table(name = "transaction_summary")
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
+@Builder
+@Table("transaction_summary")
 public class TransactionSummary {
   @Id
+  @Column("customer_id")
   private Long customerId;
 
-  @Column(nullable = false)
+  @Column("customer_name")
   private String customerName;
 
-  @Column(nullable = false)
+  @Column("total_apertura")
   private BigDecimal totalApertura;
 
-  @Column(nullable = false)
+  @Column("total_pagado")
   private BigDecimal totalPagado;
 
-  @Column(nullable = false)
+  @Column("saldo_pendiente")
   private BigDecimal saldoPendiente;
 
-  @Column(nullable = false)
+  @Column("esta_pagado")
   private boolean estaPagado;
 
+  @Column("last_payment_date")
   private LocalDateTime lastPaymentDate;
 }

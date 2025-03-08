@@ -1,45 +1,39 @@
 package com.silmaur.shop.model;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.Table;
-import java.math.BigDecimal;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.relational.core.mapping.Column;
+import org.springframework.data.relational.core.mapping.Table;
 
-@Entity
-@Table(name = "order_items")
+import java.math.BigDecimal;
+
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
+@Builder
+@Table("order_items")
 public class OrderItem {
   @Id
-  @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Long id;
 
-  @ManyToOne
-  @JoinColumn(name = "order_id", nullable = false)
-  private Order order;
+  @Column("order_id")
+  private Long orderId;
 
-  @ManyToOne
-  @JoinColumn(name = "product_id", nullable = false)
-  private Product product;
+  @Column("product_id")
+  private String productId;
 
-  @Column(nullable = false)
+  @Column("product_name")
   private String productName;
 
-  @Column(nullable = false)
+  @Column("price")
   private BigDecimal price;
 
-  @Column(nullable = false)
+  @Column("quantity")
   private int quantity;
 
-  @Column(nullable = false)
+  @Column("discount")
   private BigDecimal discount;
 }

@@ -1,6 +1,5 @@
 package com.silmaur.shop;
 
-import io.reactivex.rxjava3.plugins.RxJavaPlugins;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.EnableAspectJAutoProxy;
@@ -12,15 +11,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 public class SilmaurTiktokShopApplication {
 
   public static void main(String[] args) {
-    // 1. Configurar la estrategia de SecurityContextHolder al inicio
-    SecurityContextHolder.setStrategyName(SecurityContextHolder.MODE_INHERITABLETHREADLOCAL);
 
-    // 2. Configurar RxJavaPlugins para propagar el SecurityContext
-    RxJavaPlugins.setScheduleHandler(runnable ->
-        new DelegatingSecurityContextRunnable(runnable, SecurityContextHolder.getContext())
-    );
-
-    // 3. Iniciar la aplicación Spring Boot
     SpringApplication.run(SilmaurTiktokShopApplication.class, args);
   }
 }

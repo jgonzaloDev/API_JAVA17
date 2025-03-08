@@ -1,43 +1,36 @@
 package com.silmaur.shop.model;
 
-import jakarta.persistence.CascadeType;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.OneToMany;
-import jakarta.persistence.Table;
-import java.time.LocalDateTime;
-import java.util.List;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.hibernate.annotations.CreationTimestamp;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.relational.core.mapping.Column;
+import org.springframework.data.relational.core.mapping.Table;
 
-@Entity
-@Table(name = "live_sessions")
+import java.time.LocalDateTime;
+
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
+@Builder
+@Table("live_sessions")
 public class LiveSession {
   @Id
-  @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Long id;
 
-  @Column(nullable = false)
+  @Column("title")
   private String title;
 
-  @Column(nullable = false, length = 50)
+  @Column("platform")
   private String platform;
 
-  @Column(nullable = false)
+  @Column("start_time")
   private LocalDateTime startTime;
 
-  @Column(nullable = false)
+  @Column("end_time")
   private LocalDateTime endTime;
 
-  @CreationTimestamp
+  @Column("created_at")
   private LocalDateTime createdAt;
-
 }
