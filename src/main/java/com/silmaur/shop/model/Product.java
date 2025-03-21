@@ -19,7 +19,7 @@ import java.time.LocalDateTime;
 public class Product {
 
   @Id
-  private String id;
+  private Long id;
 
   @Column("name")
   private String name;

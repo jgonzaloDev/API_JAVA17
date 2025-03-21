@@ -1,5 +1,6 @@
 package com.silmaur.shop.model;
 
+import java.math.BigDecimal;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -19,6 +20,9 @@ public class Customer {
   @Id
   private Long id;
 
+  @Column("document_id")
+  private String documentId;
+
   @Column("name")
   private String name;
 
@@ -30,4 +34,12 @@ public class Customer {
 
   @Column("created_at")
   private LocalDateTime createdAt;
+
+  @Column("nick_tiktok")
+  private String nickTiktok;
+
+  @Column("initial_deposit")
+  private BigDecimal initialDeposit;
+
+
 }

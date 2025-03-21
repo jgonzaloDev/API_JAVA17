@@ -1,18 +1,15 @@
 package com.silmaur.shop.dto;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
 
-import java.time.LocalDateTime;
+import lombok.Builder;
+import lombok.Data;
 
 @Data
-@NoArgsConstructor
-@AllArgsConstructor
+@Builder
 public class ErrorResponse {
-  private LocalDateTime timestamp;
-  private int status;
-  private String error;
-  private String message;
-  private String path;
+  private String errorCode;
+  private String errorMessage;
+  private String field;
 }
+
+

@@ -16,7 +16,9 @@ import org.springframework.security.web.server.context.NoOpServerSecurityContext
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.reactive.CorsConfigurationSource;
 import org.springframework.web.cors.reactive.UrlBasedCorsConfigurationSource;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @Configuration
 @EnableWebFluxSecurity
 public class SecurityConfig {
@@ -38,7 +40,7 @@ public class SecurityConfig {
   public ReactiveAuthenticationManager authenticationManager() {
     UserDetailsRepositoryReactiveAuthenticationManager authManager =
         new UserDetailsRepositoryReactiveAuthenticationManager(userDetailsService);
-    authManager.setPasswordEncoder(passwordEncoder()); // Para validar contraseñas encriptadas
+    authManager.setPasswordEncoder(passwordEncoder());
     return authManager;
   }
 
@@ -49,31 +51,31 @@ public class SecurityConfig {
         .csrf(ServerHttpSecurity.CsrfSpec::disable)
         .httpBasic(ServerHttpSecurity.HttpBasicSpec::disable)
         .formLogin(ServerHttpSecurity.FormLoginSpec::disable)
-        .securityContextRepository(NoOpServerSecurityContextRepository.getInstance()) // Sesiones sin estado
-        .authorizeExchange(exchanges -> exchanges
-            .pathMatchers("/h2-console/**", "/api/auth/login", "/api/users").permitAll()
-            .anyExchange().authenticated())
+        .securityContextRepository(NoOpServerSecurityContextRepository.getInstance())
+        /*.authorizeExchange(exchanges -> exchanges
+            .pathMatchers("/api/auth/login", "/api/users/create", "/api/users/list").permitAll()
+            .pathMatchers(HttpMethod.GET, "/api/products/**").hasAnyRole("ADMIN", "USER")
+            .pathMatchers(HttpMethod.POST, "/api/products/**").hasRole("ADMIN")
+            .pathMatchers(HttpMethod.PUT, "/api/products/**").hasRole("ADMIN")
+            .pathMatchers(HttpMethod.DELETE, "/api/products/**").hasRole("ADMIN")
+            .pathMatchers(HttpMethod.GET, "/api/customers/**").hasAnyRole("ADMIN", "USER")
+            .pathMatchers(HttpMethod.POST, "/api/customers/**").hasRole("ADMIN")
+            .pathMatchers(HttpMethod.PUT, "/api/customers/**").hasRole("ADMIN")
+            .pathMatchers(HttpMethod.DELETE, "/api/customers/**").hasRole("ADMIN")
+            .anyExchange().authenticated())*/
+        .authorizeExchange(exchanges -> exchanges.anyExchange().permitAll()) // Permitir todas las solicitudes
         .addFilterAt(jwtAuthenticationFilter, SecurityWebFiltersOrder.AUTHENTICATION)
         .build();
   }
-/*
-          .authorizeExchange(exchanges -> exchanges
-      .pathMatchers("/h2-console/**", "/api/auth/login").permitAll()
-            .pathMatchers(HttpMethod.POST, "/api/users").hasRole("ADMIN") // Solo ADMIN puede crear usuarios
-            .anyExchange().authenticated())*/
 
   @Bean
   public CorsConfigurationSource corsConfigurationSource() {
     CorsConfiguration configuration = new CorsConfiguration();
-    configuration.setAllowedOrigins(List.of("*"));
-    configuration.setAllowCredentials(true); // Si necesitas autenticación con cookies o cabeceras seguras
-    configuration.setAllowedMethods(List.of(
-        HttpMethod.GET.name(),
-        HttpMethod.POST.name(),
-        HttpMethod.PUT.name(),
-        HttpMethod.DELETE.name(),
-        HttpMethod.OPTIONS.name()));
+    configuration.setAllowedOrigins(List.of("http://localhost:4200"));
+    configuration.setAllowCredentials(true);
+    configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
     configuration.setAllowedHeaders(List.of("*"));
+
     UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
     source.registerCorsConfiguration("/**", configuration);
     return source;

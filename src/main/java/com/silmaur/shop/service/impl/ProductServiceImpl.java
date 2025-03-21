@@ -8,7 +8,9 @@ import com.silmaur.shop.model.Product;
 import com.silmaur.shop.repository.ProductRepository;
 import com.silmaur.shop.service.ProductService;
 import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.time.LocalDateTime;
@@ -18,6 +20,7 @@ import java.util.stream.Collectors;
 
 @Service
 @AllArgsConstructor
+@Slf4j
 public class ProductServiceImpl implements ProductService {
 
   private final ProductMapper productMapper;
@@ -25,49 +28,48 @@ public class ProductServiceImpl implements ProductService {
 
   @Override
   public Mono<Product> createProduct(ProductDTO productDTO) {
-    // Convertir el DTO a entidad
-    Product product = productMapper.toEntity(productDTO);
-    // Verificar si ya existe un producto con el mismo nombre
-    return productRepository.findByName(product.getName())
-        .flatMap(existing ->
-            Mono.<Product>error(new ProductAlreadyExistsException("El producto con el nombre "
-                + product.getName() + " ya existe"))
-        )
+    log.info("Iniciando creación de producto con nombre: {}", productDTO.getName());
+    return productRepository.findByName(productDTO.getName())
+        .flatMap(existing -> {
+          log.warn("Producto con nombre {} ya existe", productDTO.getName());
+          return Mono.<Product>error(new ProductAlreadyExistsException("El producto con el nombre "
+              + productDTO.getName() + " ya existe"));
+        })
         .switchIfEmpty(
             Mono.defer(() -> {
-              String customId = generateCustomId(product.getName());
-              product.setId(customId);
+              Product product = productMapper.toEntity(productDTO);
               product.setCreatedAt(LocalDateTime.now());
               product.setUpdatedAt(LocalDateTime.now());
-              return productRepository.save(product);
+              log.info("Creando nuevo producto: {}", product);
+              return productRepository.save(product)
+                  .doOnSuccess(savedProduct -> log.info("Producto creado con ID: {}", savedProduct.getId()));
             })
         );
   }
 
+
+
   @Override
-  public Mono<Product> getProductById(String id) {
+  public Mono<Product> getProductById(Long id) {
     return productRepository.findById(id)
         .switchIfEmpty(Mono.error(new ProductNotFoundException("Producto no encontrado con ID: " + id)));
   }
 
   @Override
-  public Mono<List<Product>> getAllProducts() {
+  public Flux<Product> getAllProducts() {
     return productRepository.findAll()
-        .collectList()
-        .map(list -> list.stream()
-            .sorted(Comparator.comparing(p -> p.getName().toLowerCase()))
-            .collect(Collectors.toList()));
+        .sort(Comparator.comparing(p -> p.getName().toLowerCase()));
+  }
+
+  // ProductServiceImpl.java
+  @Override
+  public Mono<Void> deleteProductById(Long id) {
+    return productRepository.deleteByIdCustom(id)
+        .then(Mono.empty()); // Asegurar que la eliminación se complete
   }
 
   @Override
-  public Mono<Void> deleteProduct(String id) {
-    return productRepository.findById(id)
-        .switchIfEmpty(Mono.error(new ProductNotFoundException("Producto no encontrado con ID: " + id)))
-        .flatMap(productRepository::delete);
-  }
-
-  @Override
-  public Mono<Product> updateProduct(String id, ProductDTO productDTO) {
+  public Mono<Product> updateProduct(Long id, ProductDTO productDTO) {
     return productRepository.findById(id)
         .switchIfEmpty(Mono.error(new ProductNotFoundException("Producto no encontrado con ID: " + id)))
         .flatMap(existingProduct -> {
@@ -78,9 +80,4 @@ public class ProductServiceImpl implements ProductService {
         });
   }
 
-  private String generateCustomId(String productName) {
-    String prefix = productName.substring(0, 3).toUpperCase();
-    long timestamp = System.currentTimeMillis();
-    return prefix + timestamp;
-  }
 }

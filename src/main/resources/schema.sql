@@ -52,7 +52,7 @@ CREATE TABLE categories (
 -- Tabla de Productos
 ---------------------------------------------------------
 CREATE TABLE products (
-                          id VARCHAR(16) PRIMARY KEY,
+                          id BIGINT AUTO_INCREMENT PRIMARY KEY,
                           name VARCHAR(255) NOT NULL,
                           category_id BIGINT NOT NULL,
                           purchase_price DECIMAL(10,2) NOT NULL,
@@ -69,10 +69,13 @@ CREATE TABLE products (
 ---------------------------------------------------------
 CREATE TABLE customers (
                            id BIGINT AUTO_INCREMENT PRIMARY KEY,
+                           document_id VARCHAR(10) UNIQUE NULL,
                            name VARCHAR(255) NOT NULL,
                            phone VARCHAR(20) NOT NULL,
                            email VARCHAR(100) UNIQUE,
-                           created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+                           created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                           nick_tiktok VARCHAR(255) NULL,
+                           initial_deposit DECIMAL(10, 2) DEFAULT 10.00 NULL
 );
 
 ---------------------------------------------------------

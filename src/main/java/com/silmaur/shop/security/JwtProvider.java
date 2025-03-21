@@ -11,6 +11,9 @@ import java.security.Key;
 import java.util.Base64;
 import java.util.Date;
 import java.util.Optional;
+import java.util.List;
+import java.util.stream.Collectors;
+import org.springframework.security.core.GrantedAuthority;
 
 @Slf4j
 @Component
@@ -26,9 +29,14 @@ public class JwtProvider {
 
   private final long expirationTime;
 
-  public String generateToken(String username) {
+  public String generateToken(String username, List<GrantedAuthority> authorities) {
+    List<String> roles = authorities.stream()
+        .map(GrantedAuthority::getAuthority)
+        .collect(Collectors.toList());
+
     return Jwts.builder()
         .setSubject(username)
+        .claim("roles", roles) // Agregar la reclamación de roles
         .setIssuedAt(new Date())
         .setExpiration(new Date(System.currentTimeMillis() + expirationTime * 1000))
         .signWith(signingKey, SignatureAlgorithm.HS256)
@@ -39,7 +47,7 @@ public class JwtProvider {
     return extractClaims(token).map(Claims::getSubject);
   }
 
-  private Optional<Claims> extractClaims(String token) {
+  public Optional<Claims> extractClaims(String token) { // Cambiado a public
     try {
       return Optional.of(Jwts.parserBuilder()
           .setSigningKey(signingKey)
@@ -58,4 +66,3 @@ public class JwtProvider {
         .orElse(false);
   }
 }
-

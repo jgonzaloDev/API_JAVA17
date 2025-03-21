@@ -4,11 +4,14 @@ import com.silmaur.shop.dto.AuthRequest;
 import com.silmaur.shop.dto.AuthResponse;
 import com.silmaur.shop.security.JwtProvider;
 import com.silmaur.shop.service.AuthService;
+import java.util.List;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.ReactiveAuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.ReactiveUserDetailsService;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -31,9 +34,11 @@ public class AuthServiceImpl implements AuthService {
     return authenticationManager.authenticate(
         new UsernamePasswordAuthenticationToken(request.getUsername(), request.getPassword())
     ).flatMap(authentication ->
-        userDetailsService.findByUsername(request.getUsername()) // Devuelve Mono<UserDetails>
+        userDetailsService.findByUsername(request.getUsername())
     ).map(userDetails -> {
-      String token = jwtProvider.generateToken(userDetails.getUsername());
+      List<GrantedAuthority> authorities = userDetails.getAuthorities().stream()
+          .collect(Collectors.toList()); // Obtener la lista de GrantedAuthority
+      String token = jwtProvider.generateToken(userDetails.getUsername(), authorities); // Pasar la lista
       log.info("ESTE ES EL TOKEN QUE NECESITO VALIDAR: {}", token);
       return new AuthResponse(token);
     });

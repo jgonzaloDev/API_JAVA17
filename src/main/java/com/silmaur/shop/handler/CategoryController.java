@@ -1,40 +1,60 @@
 package com.silmaur.shop.handler;
 
 import com.silmaur.shop.dto.CategoryDto;
+import com.silmaur.shop.exception.CategoryNotFoundException;
 import com.silmaur.shop.handler.mapper.CategoryMapper;
 import com.silmaur.shop.service.CategoryService;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Mono;
-
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/categories")
+@RequestMapping("/api/v1/categories")
 @RequiredArgsConstructor
 public class CategoryController {
 
   private final CategoryService categoryService;
-  private final CategoryMapper mapper;
+  private final CategoryMapper categoryMapper;
 
-  @PostMapping
+  @PostMapping("/create")
   public Mono<ResponseEntity<CategoryDto>> createCategory(@RequestBody CategoryDto categoryDto) {
     return categoryService.createCategory(categoryDto)
         .map(category -> ResponseEntity.status(HttpStatus.CREATED)
-            .body(mapper.toCategoryDTO(category)));
+            .body(categoryMapper.toCategoryDTO(category)));
   }
 
-  @GetMapping
-  public Mono<ResponseEntity<List<CategoryDto>>> getAllProducts() {
+  @GetMapping("/{id}")
+  public Mono<ResponseEntity<CategoryDto>> getCategoryById(@PathVariable String id) {
+    return categoryService.getCategoryById(id)
+        .map(category -> ResponseEntity.ok(categoryMapper.toCategoryDTO(category)))
+        .switchIfEmpty(Mono.error(new CategoryNotFoundException("Categoría no encontrada con id: " + id)));
+  }
+
+  @GetMapping("/all")
+  public Mono<ResponseEntity<List<CategoryDto>>> getAllCategories() {
     return categoryService.getAllCategories()
-        .map(categories -> categories.isEmpty()
-            ? ResponseEntity.noContent().build()
-            : ResponseEntity.ok(categories.stream().map(mapper::toCategoryDTO).toList()));
+        .map(categories -> categories.stream()
+            .map(categoryMapper::toCategoryDTO)
+            .collect(Collectors.toList()))
+        .map(ResponseEntity::ok);
+  }
+
+  @PutMapping("/update/{id}")
+  public Mono<ResponseEntity<CategoryDto>> updateCategory(
+      @PathVariable String id,
+      @RequestBody CategoryDto categoryDto) {
+    return categoryService.updateCategory(id, categoryDto)
+        .map(category -> ResponseEntity.ok(categoryMapper.toCategoryDTO(category)))
+        .switchIfEmpty(Mono.error(new CategoryNotFoundException("Categoría no encontrada con id: " + id)));
+  }
+
+  @DeleteMapping("/delete/{id}")
+  public Mono<ResponseEntity<Void>> deleteCategory(@PathVariable String id) {
+    return categoryService.deleteCategory(id)
+        .then(Mono.just(ResponseEntity.noContent().build()));
   }
 }

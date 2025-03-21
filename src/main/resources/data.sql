@@ -27,19 +27,20 @@ INSERT INTO categories (name, description) VALUES
 
 -- 4. Productos
 -- Se asume que los IDs de categorías se asignan en orden: 1=Electrónica, 2=Ropa, etc.
-INSERT INTO products (id,name, category_id, purchase_price, sale_price, stock, min_stock, created_at, updated_at)
+INSERT INTO products (name, category_id, purchase_price, sale_price, stock, min_stock, created_at, updated_at)
 VALUES
-    ('P000000001','Smartphone', 1, 500.00, 700.00, 50, 5, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
-    ('P000000002','Laptop', 1, 800.00, 1200.00, 30, 5, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
-    ('P000000003','Camiseta', 2, 10.00, 20.00, 100, 10, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
-    ('P000000004','Sofá', 3, 300.00, 500.00, 10, 2, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
-    ('P000000005','Pelota de fútbol', 5, 15.00, 30.00, 50, 5, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);
+    ('Smartphone', 1, 500.00, 700.00, 50, 5, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+    ('Laptop', 1, 800.00, 1200.00, 30, 5, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+    ('Camiseta', 2, 10.00, 20.00, 100, 10, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+    ('Sofá', 3, 300.00, 500.00, 10, 2, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);
 
 -- 5. Clientes
-INSERT INTO customers (name, phone, email, created_at)
+
+INSERT INTO customers (document_id,name, phone, email, nick_tiktok, initial_deposit, created_at)
 VALUES
-    ('Juan Pérez', '123456789', 'juan@example.com', CURRENT_TIMESTAMP),
-    ('María Gómez', '987654321', 'maria@example.com', CURRENT_TIMESTAMP);
+    ('70315256','Ana García', '5551234567', 'ana.garcia@example.com', '@anagarcia', 20.00, '2024-10-27 10:30:00'),
+    ('80204745','Carlos Pérez', '5559876543', 'carlos.perez@example.com', '@carlosperez', 10.00, '2024-10-27 10:30:00'),
+    ('47452589','Laura Rodríguez', '5551122334', 'laura.rodriguez@example.com', '@laurarodriguez', 15.00, '2024-10-27 10:30:00');
 
 -- 6. Sesiones en Vivo
 INSERT INTO live_sessions (title, platform, start_time, end_time, created_at)
@@ -62,8 +63,8 @@ VALUES
 -- Suponiendo que el pedido insertado tenga id=1 y se venden dos productos: Smartphone y Pelota de fútbol.
 INSERT INTO order_items (order_id, product_id, product_name, price, quantity, discount)
 VALUES
-    (1, 'P000000001', 'Smartphone', 700.00, 1, 0.00),
-    (1, 'P000000001', 'Pelota de fútbol', 30.00, 1, 10.00);
+    (1, 2, 'Smartphone', 700.00, 1, 0.00),
+    (1, 3, 'Pelota de fútbol', 30.00, 1, 10.00);
 
 -- 10. Pagos
 -- Se registra un pago parcial para el pedido 1.
