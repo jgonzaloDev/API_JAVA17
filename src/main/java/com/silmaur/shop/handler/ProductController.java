@@ -1,6 +1,9 @@
 package com.silmaur.shop.handler;
 
 import com.silmaur.shop.dto.ProductDTO;
+import com.silmaur.shop.dto.Response;
+import com.silmaur.shop.exception.DocumentIdAlreadyExistsException;
+import com.silmaur.shop.exception.SalePriceLessThanPurchasePriceException;
 import com.silmaur.shop.handler.mapper.ProductMapper;
 import com.silmaur.shop.service.ProductService;
 import jakarta.validation.Valid;
@@ -23,42 +26,58 @@ public class ProductController {
   private final ProductService productService;
   private final ProductMapper productMapper;
 
+  /**
+   * Endpoint para crear un producto.
+   */
   @PostMapping
-  public Mono<ResponseEntity<ProductDTO>> createProduct(@Valid @RequestBody ProductDTO productDTO) {
+  public Mono<ResponseEntity<Response<ProductDTO>>> createProduct(@Valid @RequestBody ProductDTO productDTO) {
     return productService.createProduct(productDTO)
-        .map(product -> ResponseEntity.status(HttpStatus.CREATED).body(productMapper.toDTO(product)));
+        .map(product -> ResponseEntity.status(HttpStatus.CREATED)
+            .body(Response.success("PRODUCTO CREADO CORRECTAMENTE", productMapper.toDto(product))));
   }
 
 
 
+
+  /**
+   * Endpoint para obtener todos los productos.
+   */
   @GetMapping
   public Mono<ResponseEntity<List<ProductDTO>>> getAllProducts() {
     return productService.getAllProducts()
         .collectList() // Collect Flux<Product> into Mono<List<Product>>
         .map(products -> {
           if (products.isEmpty()) {
-            return ResponseEntity.noContent().build();
+            return ResponseEntity.noContent().build(); // No hay productos
           } else {
+            // Convertimos cada producto a un ProductDTO
             List<ProductDTO> productDTOs = products.stream()
-                .map(productMapper::toDTO)
+                .map(productMapper::toDto)
                 .collect(Collectors.toList());
             return ResponseEntity.ok(productDTOs);
           }
         });
   }
 
+  /**
+   * Endpoint para eliminar un producto por su ID.
+   */
   @DeleteMapping("/{id}")
   @ResponseStatus(HttpStatus.NO_CONTENT)
   public Mono<Void> deleteProduct(@PathVariable Long id) {
     return productService.deleteProductById(id);
   }
 
-
+  /**
+   * Endpoint para actualizar un producto existente.
+   */
   @PutMapping("/{id}")
   public Mono<ResponseEntity<ProductDTO>> updateProduct(@PathVariable Long id,
       @Valid @RequestBody ProductDTO productDTO) {
     return productService.updateProduct(id, productDTO)
-        .map(product -> ResponseEntity.ok(productMapper.toDTO(product)))
-        .onErrorReturn(ResponseEntity.notFound().build());
+        .map(
+            product -> ResponseEntity.ok(productMapper.toDto(product))) // Mapeamos la entidad a DTO
+        .onErrorReturn(
+            ResponseEntity.notFound().build()); // Si no se encuentra el producto, devolvemos 404
   }
 }

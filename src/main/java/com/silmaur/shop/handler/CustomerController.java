@@ -49,15 +49,16 @@ public class CustomerController {
 
   @GetMapping
   public Flux<CustomerDTO> getAllCustomers(
-      @RequestParam(value = "page", required = false) Integer page,
-      @RequestParam(value = "size", required = false) Integer size) {
-    Flux<CustomerDTO> customersFlux = customerService.getAllCustomers();
-    if (page != null && size != null) {
-      // Apply pagination by skipping and limiting the results
-      long skipCount = (long) page * size;
-      customersFlux = customersFlux.skip(skipCount).take(size);
+      @RequestParam(value = "page", defaultValue = "0") int page,
+      @RequestParam(value = "size", defaultValue = "10") int size) {
+
+    if (page < 0 || size < 1) {
+      return Flux.error(new IllegalArgumentException("Page and size must be positive numbers."));
     }
-    return customersFlux;
+
+    Flux<CustomerDTO> customersFlux = customerService.getAllCustomers();
+    long skipCount = (long) page * size;
+    return customersFlux.skip(skipCount).take(size);
   }
 
   // Obtener un cliente por ID

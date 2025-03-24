@@ -1,12 +1,15 @@
 package com.silmaur.shop.exception;
 
 import com.silmaur.shop.dto.AuthResponse;
+import com.silmaur.shop.dto.ErrorResponse;
+import com.silmaur.shop.dto.Response;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.*;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import reactor.core.publisher.Mono;
 
@@ -55,4 +58,42 @@ public class GlobalExceptionHandler {
     return Mono.just(ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
         .body(new AuthResponse("Error de autenticación desconocido")));
   }*/
+
+  @ExceptionHandler(SalePriceLessThanPurchasePriceException.class)
+  @ResponseStatus(HttpStatus.BAD_REQUEST)
+  public Response<ErrorResponse> handleSalePriceLessThanPurchasePriceException(SalePriceLessThanPurchasePriceException ex) {
+    return Response.<ErrorResponse>builder()
+        .status(HttpStatus.BAD_REQUEST)
+        .message(ex.getMessage())
+        .data(ErrorResponse.builder()
+            .errorCode("SALE_PRICE_INVALID")
+            .errorMessage(ex.getMessage())
+            .field("salePrice")
+            .build())
+        .build();
+  }
+
+  @ExceptionHandler(DocumentIdAlreadyExistsException.class)
+  @ResponseStatus(HttpStatus.CONFLICT)
+  public Response<ErrorResponse> handleDocumentExistsException(DocumentIdAlreadyExistsException ex) {
+    return Response.error(
+        HttpStatus.CONFLICT,
+        ex.getMessage(),
+        "PRODUCT_EXISTS",
+        "name"
+    );
+  }
+
+  // Opcional: Manejo genérico
+  @ExceptionHandler(Exception.class)
+  @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
+  public Response<ErrorResponse> handleGeneralException(Exception ex) {
+    return Response.error(
+        HttpStatus.INTERNAL_SERVER_ERROR,
+        "Ha ocurrido un error inesperado",
+        "INTERNAL_ERROR",
+        null
+    );
+  }
+
 }

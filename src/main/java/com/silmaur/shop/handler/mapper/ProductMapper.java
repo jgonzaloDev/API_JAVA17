@@ -1,6 +1,7 @@
 package com.silmaur.shop.handler.mapper;
 
 import com.silmaur.shop.dto.ProductDTO;
+import com.silmaur.shop.dto.SpecificationsDTO;
 import com.silmaur.shop.model.Product;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
@@ -16,39 +17,51 @@ import org.mapstruct.NullValuePropertyMappingStrategy;
 )
 public interface ProductMapper {
 
-  // Mapea DTO a Entity
-  @Mappings({
-      @Mapping(target = "id", ignore = true), // Ignora el ID para mantener el existente
-      @Mapping(target = "name", source = "name"),
-      @Mapping(target = "purchasePrice", source = "purchasePrice"),
-      @Mapping(target = "salePrice", source = "salePrice"),
-      @Mapping(target = "stock", source = "stock"),
-      @Mapping(target = "minStock", source = "minStock"),
-      // En lugar de "category.id", mapea directamente a "categoryId"
-      @Mapping(target = "categoryId", source = "categoryId"),
-      @Mapping(target = "createdAt", ignore = true), // No sobrescribir fecha de creación
-      @Mapping(target = "updatedAt", ignore = true)  // Se maneja en @PreUpdate o manualmente
-  })
-  Product toEntity(ProductDTO dto);
-
-  // Mapea Entity a DTO
-  @Mappings({
-      @Mapping(target = "id", source = "id"),
-      @Mapping(target = "name", source = "name"),
-      @Mapping(target = "purchasePrice", source = "purchasePrice"),
-      @Mapping(target = "salePrice", source = "salePrice"),
-      @Mapping(target = "stock", source = "stock"),
-      @Mapping(target = "minStock", source = "minStock"),
-      // Mapea directamente "categoryId" de la entidad al DTO
-      @Mapping(target = "categoryId", source = "categoryId")
-  })
-  ProductDTO toDTO(Product entity);
-
-  // Actualiza una entidad existente a partir del DTO sin sobrescribir ID ni fechas
   @Mappings({
       @Mapping(target = "id", ignore = true),
       @Mapping(target = "createdAt", ignore = true),
-      @Mapping(target = "updatedAt", ignore = true)
+      @Mapping(target = "updatedAt", ignore = true),
+      @Mapping(target = "material", source = "specifications.material"),
+      @Mapping(target = "capacity", source = "specifications.capacity"),
+      @Mapping(target = "color", source = "specifications.color"),
+      // otros campos explícitos (si deseas simplificar, MapStruct los detecta automáticamente por nombre)
+  })
+  Product toEntity(ProductDTO dto);
+
+  @Mappings({
+      @Mapping(target = "specifications.material", source = "material"),
+      @Mapping(target = "specifications.capacity", source = "capacity"),
+      @Mapping(target = "specifications.color", source = "color"),
+      // otros campos explícitos si deseas
+  })
+  ProductDTO toDto(Product entity);
+
+  @Mappings({
+      @Mapping(target = "id", ignore = true),
+      @Mapping(target = "createdAt", ignore = true),
+      @Mapping(target = "updatedAt", ignore = true),
+      @Mapping(target = "material", source = "specifications.material"),
+      @Mapping(target = "capacity", source = "specifications.capacity"),
+      @Mapping(target = "color", source = "specifications.color"),
+      // otros campos si deseas
   })
   void updateProductFromDTO(ProductDTO dto, @MappingTarget Product entity);
+
+  // Métodos auxiliares explícitos
+  default SpecificationsDTO mapSpecifications(Product entity) {
+    SpecificationsDTO spec = new SpecificationsDTO();
+    spec.setMaterial(entity.getMaterial());
+    spec.setCapacity(entity.getCapacity());
+    spec.setColor(entity.getColor());
+    return spec;
+  }
+
+  default void mapSpecifications(ProductDTO dto, @MappingTarget Product entity) {
+    if (dto.getSpecifications() != null) {
+      entity.setMaterial(dto.getSpecifications().getMaterial());
+      entity.setCapacity(dto.getSpecifications().getCapacity());
+      entity.setColor(dto.getSpecifications().getColor());
+    }
+  }
 }
+

@@ -5,15 +5,14 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import org.springframework.http.HttpStatus;
 
-import java.time.LocalDateTime;
 
 import lombok.Builder;
-import lombok.Data;
-import org.springframework.http.HttpStatus;
+
 
 @Data
 @Builder
 public class Response<T> {
+
   private HttpStatus status;
   private String message;
   private T data;
@@ -45,7 +44,11 @@ public class Response<T> {
     return Response.<ErrorResponse>builder()
         .status(status)
         .message(message)
-        .data(ErrorResponse.builder().errorCode(errorCode).errorMessage(message).field(field).build())
+        .data(ErrorResponse.builder()
+            .errorCode(errorCode)
+            .errorMessage(message)
+            .field(field)
+            .build())
         .build();
   }
 }

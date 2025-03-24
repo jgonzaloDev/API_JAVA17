@@ -44,4 +44,15 @@ public class ProductDTO {
   @NotNull(message = "El stock mínimo es obligatorio")
   @Min(value = 0, message = "El stock mínimo no puede ser negativo")
   private Integer minStock;
+
+  private String description;
+  private String imageUrl;
+  private String brand;
+  private String model;
+  private SpecificationsDTO specifications;
+  private String status;
+  private String unit;
+  private String barcode;
+  private String sku;
+  private BigDecimal discount;
 }
