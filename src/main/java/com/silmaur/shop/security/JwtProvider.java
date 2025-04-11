@@ -1,3 +1,4 @@
+/*
 package com.silmaur.shop.security;
 
 import io.jsonwebtoken.*;
@@ -65,4 +66,4 @@ public class JwtProvider {
         .map(claims -> claims.getExpiration().after(new Date()))
         .orElse(false);
   }
-}
+}*/

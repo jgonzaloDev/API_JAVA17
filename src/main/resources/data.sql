@@ -41,9 +41,9 @@ VALUES
 
 INSERT INTO customers (document_id,name, phone, email, nick_tiktok, initial_deposit, created_at)
 VALUES
-    ('70315256','Ana García', '5551234567', 'ana.garcia@example.com', '@anagarcia', 20.00, '2024-10-27 10:30:00'),
-    ('80204745','Carlos Pérez', '5559876543', 'carlos.perez@example.com', '@carlosperez', 10.00, '2024-10-27 10:30:00'),
-    ('47452589','Laura Rodríguez', '5551122334', 'laura.rodriguez@example.com', '@laurarodriguez', 15.00, '2024-10-27 10:30:00');
+    ('70315256','Ana García', '5551234567', 'ana.garcia@example.com', 'anagarcia', 20.00, '2024-10-27 10:30:00'),
+    ('80204745','Carlos Pérez', '5559876543', 'carlos.perez@example.com', 'carlosperez', 10.00, '2024-10-27 10:30:00'),
+    ('47452589','Laura Rodríguez', '5551122334', 'laura.rodriguez@example.com', 'laurarodriguez', 15.00, '2024-10-27 10:30:00');
 
 -- 6. Sesiones en Vivo
 INSERT INTO live_sessions (title, platform, start_time, end_time, created_at)
@@ -58,9 +58,10 @@ VALUES
 
 -- 8. Pedidos (Orders)
 -- Supongamos que el cliente con id=1 (Juan Pérez) realiza un pedido
-INSERT INTO orders (customer_id, campaign_id, live_session_id, apertura, total_amount, status, acumulando, payment_due_date, created_at, updated_at)
+INSERT INTO orders (customer_id, campaign_id, live_session_id, aperture, total_amount,real_amount_to_pay, status, accumulation, payment_due_date, dias_sin_pagar, created_at, updated_at)
 VALUES
-    (1, 1, 1, 100.00, 750.00, 'NO_PAGADO', TRUE, '2025-03-05 23:59:59', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);
+    (1, 1, 1, 100.00, 750.00, 200.00,'NO_PAGADO', TRUE, '2025-03-05 23:59:59', 0, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);
+
 
 -- 9. Items de Pedido (Order Items)
 -- Suponiendo que el pedido insertado tenga id=1 y se venden dos productos: Smartphone y Pelota de fútbol.

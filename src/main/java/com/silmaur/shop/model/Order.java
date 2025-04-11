@@ -1,56 +1,86 @@
 package com.silmaur.shop.model;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 import org.springframework.data.annotation.Id;
-import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.data.relational.core.mapping.Table;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
+/**
+ * Entidad que representa una orden (pedido) dentro del sistema Silmaur Shop.
+ * Almacena información del cliente, campaña, sesión en vivo, estado del pedido,
+ * montos, fechas, y días sin pagar para control interno.
+ */
 @Data
-@NoArgsConstructor
-@AllArgsConstructor
 @Builder
+@AllArgsConstructor
+@NoArgsConstructor
 @Table("orders")
 public class Order {
+
+  /**
+   * ID único del pedido generado automáticamente por la base de datos.
+   */
   @Id
   private Long id;
 
-  // Se almacena el ID del cliente
-  @Column("customer_id")
+  /**
+   * ID del cliente que realiza el pedido.
+   */
   private Long customerId;
 
-  // Se almacena el ID de la campaña (opcional)
-  @Column("campaign_id")
+  /**
+   * ID opcional de la campaña promocional asociada al pedido.
+   */
   private Long campaignId;
 
-  // Se almacena el ID de la sesión en vivo (opcional)
-  @Column("live_session_id")
+  /**
+   * ID opcional de la sesión en vivo asociada al pedido.
+   */
   private Long liveSessionId;
 
-  @Column("apertura")
-  private BigDecimal apertura;
+  /**
+   * Monto inicial del pedido (apertura o adelanto inicial).
+   */
+  private BigDecimal aperture;
 
-  @Column("total_amount")
+  /**
+   * Monto total del pedido (calculado internamente en backend).
+   */
   private BigDecimal totalAmount;
 
-  // El status se almacena como VARCHAR (valores 'PAGADO' o 'NO_PAGADO')
-  @Column("status")
+  /**
+   * Estado actual del pedido (PAGADO o NO_PAGADO).
+   */
   private String status;
 
-  @Column("acumulando")
-  private boolean acumulando;
+  /**
+   * Indica si el pedido acumula productos o pagos adicionales pendientes.
+   */
+  private Boolean accumulation;
 
-  @Column("payment_due_date")
+  /**
+   * Fecha límite para completar el pago total del pedido.
+   */
   private LocalDateTime paymentDueDate;
 
-  @Column("created_at")
+  /**
+   * Días transcurridos sin recibir un pago completo (campo interno).
+   */
+  private Integer diasSinPagar;
+
+  /**
+   * Fecha y hora de creación del pedido.
+   */
   private LocalDateTime createdAt;
 
-  @Column("updated_at")
+  /**
+   * Fecha y hora de la última actualización del pedido.
+   */
   private LocalDateTime updatedAt;
+  /**
+   * Monto real que debe pagar el cliente
+   */
+  private BigDecimal realAmountToPay;
 }

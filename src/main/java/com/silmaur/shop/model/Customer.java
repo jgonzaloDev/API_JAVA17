@@ -75,4 +75,10 @@ public class Customer {
    */
   @Column("shipping_preference")
   private ShippingPreferences shippingPreference = ShippingPreferences.ACCUMULATE;
+  /**
+   * Saldo a favor del cliente.
+   */
+  @Column("remaining_deposit")
+  private BigDecimal remainingDeposit;
+
 }

@@ -7,11 +7,13 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.Size;
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.springframework.data.relational.core.mapping.Column;
 
 @Getter
 @Setter
@@ -54,5 +56,7 @@ public class ProductDTO {
   private String unit;
   private String barcode;
   private String sku;
+  private LocalDateTime createdAt;
+  private LocalDateTime updatedAt;
   private BigDecimal discount;
 }

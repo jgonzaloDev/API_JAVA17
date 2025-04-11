@@ -1,3 +1,4 @@
+/*
 package com.silmaur.shop.security;
 
 import java.util.List;
@@ -52,7 +53,20 @@ public class SecurityConfig {
         .httpBasic(ServerHttpSecurity.HttpBasicSpec::disable)
         .formLogin(ServerHttpSecurity.FormLoginSpec::disable)
         .securityContextRepository(NoOpServerSecurityContextRepository.getInstance())
-        /*.authorizeExchange(exchanges -> exchanges
+        .authorizeExchange(exchanges -> exchanges.anyExchange().permitAll()) // Permitir todas las solicitudes
+        .build();
+  }
+  */
+/*
+  @Bean
+  public SecurityWebFilterChain securityWebFilterChain(ServerHttpSecurity http) {
+    return http
+        .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+        .csrf(ServerHttpSecurity.CsrfSpec::disable)
+        .httpBasic(ServerHttpSecurity.HttpBasicSpec::disable)
+        .formLogin(ServerHttpSecurity.FormLoginSpec::disable)
+        .securityContextRepository(NoOpServerSecurityContextRepository.getInstance())
+        authorizeExchange(exchanges -> exchanges
             .pathMatchers("/api/auth/login", "/api/users/create", "/api/users/list").permitAll()
             .pathMatchers(HttpMethod.GET, "/api/products/**").hasAnyRole("ADMIN", "USER")
             .pathMatchers(HttpMethod.POST, "/api/products/**").hasRole("ADMIN")
@@ -62,11 +76,12 @@ public class SecurityConfig {
             .pathMatchers(HttpMethod.POST, "/api/customers/**").hasRole("ADMIN")
             .pathMatchers(HttpMethod.PUT, "/api/customers/**").hasRole("ADMIN")
             .pathMatchers(HttpMethod.DELETE, "/api/customers/**").hasRole("ADMIN")
-            .anyExchange().authenticated())*/
+            .anyExchange().authenticated())
         .authorizeExchange(exchanges -> exchanges.anyExchange().permitAll()) // Permitir todas las solicitudes
         .addFilterAt(jwtAuthenticationFilter, SecurityWebFiltersOrder.AUTHENTICATION)
         .build();
-  }
+  }*//*
+
 
   @Bean
   public CorsConfigurationSource corsConfigurationSource() {
@@ -81,3 +96,4 @@ public class SecurityConfig {
     return source;
   }
 }
+*/

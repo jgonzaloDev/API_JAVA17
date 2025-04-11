@@ -1,3 +1,4 @@
+/*
 package com.silmaur.shop.service.impl;
 
 import com.silmaur.shop.dto.UserDTO;
@@ -52,3 +53,4 @@ public class UserServiceImpl implements UserService {
     return new UserDTO(user.getUsername(), user.getPassword(), user.getRoleId());
   }
 }
+*/

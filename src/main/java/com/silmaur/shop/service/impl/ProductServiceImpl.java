@@ -34,25 +34,43 @@ public class ProductServiceImpl implements ProductService {
     log.info("Iniciando creación de producto con nombre: {}", productDTO.getName());
 
     return productRepository.findByName(productDTO.getName())
-        .flatMap(existing -> Mono.<Product>error(new ProductAlreadyExistsException(
-            "El producto con el nombre " + productDTO.getName() + " ya existe")))
+        .flatMap(existing -> {
+          log.warn("Ya existe un producto con nombre: {}", productDTO.getName());
+          return Mono.<Product>error(new ProductAlreadyExistsException(
+              "El producto con el nombre " + productDTO.getName() + " ya existe"));
+        })
         .switchIfEmpty(Mono.defer(() -> {
           Product product = productMapper.toEntity(productDTO);
           product.setCreatedAt(LocalDateTime.now());
           product.setUpdatedAt(LocalDateTime.now());
 
           return productRepository.save(product)
-              .doOnSuccess(savedProduct -> log.info("Producto creado con ID: {}", savedProduct.getId()));
+              .doOnSuccess(saved -> log.info("Producto creado con ID: {}", saved.getId()));
         }))
-        .onErrorMap(DataIntegrityViolationException.class, ex -> {
-          if (ex.getMessage().contains("CONSTRAINT_F2")) {
-            return new SalePriceLessThanPurchasePriceException(
+        .onErrorResume(DataIntegrityViolationException.class, ex -> {
+          String message = ex.getMessage();
+
+          if (message != null && (message.contains("UNIQUE") || message.contains("UK") || message.contains("constraint [UK"))) {
+            log.error("Violación de unicidad al guardar producto: {}", message);
+            return Mono.<Product>error(new ProductAlreadyExistsException("Ya existe un producto con el mismo nombre"));
+          }
+
+          if (message != null && message.contains("CONSTRAINT_F2")) {
+            return Mono.<Product>error(new SalePriceLessThanPurchasePriceException(
                 "El precio de venta ('" + productDTO.getSalePrice()
                     + "') debe ser mayor o igual al precio de compra ('"
-                    + productDTO.getPurchasePrice() + "').");
+                    + productDTO.getPurchasePrice() + "')."));
           }
-          return ex;
+
+          return Mono.<Product>error(ex);
         });
+  }
+
+
+
+  @Override
+  public Mono<Product> getProductById(Long id) {
+    return productRepository.findById(id);
   }
 
 
@@ -75,14 +93,26 @@ public class ProductServiceImpl implements ProductService {
   @Override
   public Mono<Product> updateProduct(Long id, ProductDTO productDTO) {
     return productRepository.findById(id)
-        .switchIfEmpty(
-            Mono.error(new ProductNotFoundException("Producto no encontrado con ID: " + id)))
-        .flatMap(existingProduct -> {
-          // Actualiza los valores sin sobrescribir ID ni fecha de creación
-          productMapper.updateProductFromDTO(productDTO, existingProduct);
-          existingProduct.setUpdatedAt(LocalDateTime.now());
-          return productRepository.save(existingProduct);
-        });
+        .switchIfEmpty(Mono.error(new ProductNotFoundException("Producto no encontrado con ID: " + id)))
+        .flatMap(existingProduct ->
+            productRepository.findByName(productDTO.getName())
+                .flatMap(anotherProduct -> {
+                  // 💥 Si existe otro producto con el mismo nombre y diferente ID => ERROR
+                  if (!anotherProduct.getId().equals(id)) {
+                    return Mono.error(new ProductAlreadyExistsException("El producto con el nombre " + productDTO.getName() + " ya existe"));
+                  }
+                  return Mono.just(existingProduct); // ✅ Es el mismo, permite continuar
+                })
+                .switchIfEmpty(Mono.just(existingProduct)) // No existe nadie con ese nombre, también se permite
+                .flatMap(prod -> {
+                  productMapper.updateProductFromDTO(productDTO, prod);
+                  prod.setUpdatedAt(LocalDateTime.now());
+                  return productRepository.save(prod);
+                })
+        );
   }
+
+
+
 
 }

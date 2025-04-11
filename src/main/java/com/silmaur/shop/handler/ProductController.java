@@ -80,4 +80,26 @@ public class ProductController {
         .onErrorReturn(
             ResponseEntity.notFound().build()); // Si no se encuentra el producto, devolvemos 404
   }
+
+
+  /**
+   * Endpoint para obtener un producto por su ID.
+   */
+
+  @GetMapping("/{id}")
+  public Mono<ResponseEntity<Response<ProductDTO>>> getProductById(@PathVariable Long id) {
+    return productService.getProductById(id)
+        .map(product -> ResponseEntity.ok(
+            Response.success("Producto encontrado", productMapper.toDto(product))
+        ))
+        .switchIfEmpty(Mono.just(ResponseEntity.status(HttpStatus.NOT_FOUND)
+            .body((Response<ProductDTO>) (Object) Response.error(
+                HttpStatus.NOT_FOUND,
+                "Producto no encontrado",
+                "PRODUCT_NOT_FOUND",
+                "id"
+            ))));
+  }
+
+
 }

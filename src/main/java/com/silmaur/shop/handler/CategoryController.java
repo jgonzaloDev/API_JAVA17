@@ -13,7 +13,7 @@ import reactor.core.publisher.Mono;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/v1/categories")
+@RequestMapping("/api/categories")
 @RequiredArgsConstructor
 public class CategoryController {
 
@@ -34,7 +34,7 @@ public class CategoryController {
         .switchIfEmpty(Mono.error(new CategoryNotFoundException("Categoría no encontrada con id: " + id)));
   }
 
-  @GetMapping("/all")
+  @GetMapping
   public Mono<ResponseEntity<List<CategoryDto>>> getAllCategories() {
     return categoryService.getAllCategories()
         .map(categories -> categories.stream()

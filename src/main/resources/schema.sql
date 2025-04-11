@@ -88,14 +88,16 @@ CREATE TABLE products
 CREATE TABLE customers
 (
     id                  BIGINT AUTO_INCREMENT PRIMARY KEY,
-    document_id         VARCHAR(10) UNIQUE                  NULL,
-    name                VARCHAR(255)                        NOT NULL,
-    phone               VARCHAR(20)                         NOT NULL,
-    email               VARCHAR(100) UNIQUE,
+    document_id         VARCHAR(25)                         NULL,
+    name                VARCHAR(255)                        NULL,
+    phone               VARCHAR(20)                         NULL,
+    email               VARCHAR(100)                        NULL,
     created_at          TIMESTAMP                           NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    nick_tiktok         VARCHAR(255)                        NULL,
+    nick_tiktok         VARCHAR(255) UNIQUE                 NOT NULL,
     initial_deposit     DECIMAL(10, 2) DEFAULT 10.00        NOT NULL,
-    shipping_preference VARCHAR(10)    DEFAULT 'ACCUMULATE' NOT NULL
+    shipping_preference VARCHAR(10)    DEFAULT 'ACCUMULATE' NOT NULL,
+    remaining_deposit   DECIMAL(10, 2) DEFAULT 0
+
 
 );
 
@@ -133,13 +135,20 @@ CREATE TABLE orders
     customer_id      BIGINT         NOT NULL,
     campaign_id      BIGINT         NULL,
     live_session_id  BIGINT         NULL,
-    apertura         DECIMAL(10, 2) NOT NULL CHECK (apertura <= total_amount),
+
+    --  Cambiado: ahora permite nulos (opcional)
+    aperture         DECIMAL(10, 2) NULL,
+
     total_amount     DECIMAL(10, 2) NOT NULL,
+    real_amount_to_pay  DECIMAL(10, 2) NOT NULL DEFAULT 0.00, -- 👈 NUEVO CAMPO
     status           VARCHAR(20)    NOT NULL CHECK (status IN ('PAGADO', 'NO_PAGADO')),
-    acumulando       BOOLEAN        NOT NULL DEFAULT FALSE,
+    accumulation     BOOLEAN        NOT NULL DEFAULT FALSE,
     payment_due_date TIMESTAMP      NULL,
+    dias_sin_pagar   INT            NOT NULL DEFAULT 0,
+
     created_at       TIMESTAMP      NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at       TIMESTAMP      NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+
     FOREIGN KEY (customer_id) REFERENCES customers (id) ON DELETE CASCADE,
     FOREIGN KEY (campaign_id) REFERENCES campaigns (id) ON DELETE SET NULL,
     FOREIGN KEY (live_session_id) REFERENCES live_sessions (id) ON DELETE SET NULL

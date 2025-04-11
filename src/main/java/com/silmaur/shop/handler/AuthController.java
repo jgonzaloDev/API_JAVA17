@@ -1,3 +1,4 @@
+/*
 package com.silmaur.shop.handler;
 
 import com.silmaur.shop.dto.AuthRequest;
@@ -41,4 +42,4 @@ public class AuthController {
           return ResponseEntity.ok(new AuthResponse(token));
         });
   }
-}
+}*/

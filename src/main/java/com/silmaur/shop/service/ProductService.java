@@ -11,4 +11,6 @@ public interface ProductService {
   Flux<Product> getAllProducts();;
   Mono<Product> updateProduct(Long id, ProductDTO productDTO);
   Mono<Void> deleteProductById(Long id);
+  Mono<Product> getProductById(Long id);
+
 }
