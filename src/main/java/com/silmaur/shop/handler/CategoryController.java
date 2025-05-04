@@ -4,6 +4,7 @@ import com.silmaur.shop.dto.CategoryDto;
 import com.silmaur.shop.exception.CategoryNotFoundException;
 import com.silmaur.shop.handler.mapper.CategoryMapper;
 import com.silmaur.shop.service.CategoryService;
+import jakarta.validation.Valid;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -21,7 +22,7 @@ public class CategoryController {
   private final CategoryMapper categoryMapper;
 
   @PostMapping("/create")
-  public Mono<ResponseEntity<CategoryDto>> createCategory(@RequestBody CategoryDto categoryDto) {
+  public Mono<ResponseEntity<CategoryDto>> createCategory(@Valid @RequestBody CategoryDto categoryDto) {
     return categoryService.createCategory(categoryDto)
         .map(category -> ResponseEntity.status(HttpStatus.CREATED)
             .body(categoryMapper.toCategoryDTO(category)));

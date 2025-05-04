@@ -11,6 +11,7 @@ import org.springframework.stereotype.Repository;
 public interface ProductRepository extends ReactiveCrudRepository<Product, Long> {
 
   // Buscar producto por nombre (asegúrate de que el nombre es único)
+  @Query("SELECT * FROM products WHERE name = :name")
   Mono<Product> findByName(String name);
 
 

@@ -31,11 +31,24 @@
 		</dependency>
 
 		<!-- Driver R2DBC para H2 -->
-		<dependency>
+	<!--	<dependency>
 			<groupId>io.r2dbc</groupId>
 			<artifactId>r2dbc-h2</artifactId>
 			<scope>runtime</scope>
+		</dependency>-->
+		<!-- Driver R2DBC para PostgreSQL -->
+		<dependency>
+			<groupId>org.postgresql</groupId>
+			<artifactId>r2dbc-postgresql</artifactId>
+			<version>1.0.5.RELEASE</version>
 		</dependency>
+		<!-- Driver JDBC para PostgreSQL (opcional, pero útil para herramientas externas o test) -->
+		<dependency>
+			<groupId>org.postgresql</groupId>
+			<artifactId>postgresql</artifactId>
+			<version>42.7.1</version>
+		</dependency>
+
 
 		<!-- Validación con Jakarta -->
 		<dependency>
