@@ -1,8 +1,14 @@
+#spring:
+#  r2dbc:
+#    url: r2dbc:postgresql://localhost:5432/silmaurdb
+#    username: postgres
+#    password: root
 spring:
   r2dbc:
-    url: r2dbc:postgresql://localhost:5432/silmaurdb
-    username: postgres
-    password: root
+    url: r2dbc:postgresql://dpg-d0begqhr0fns73dcqje0-a.oregon-postgres.render.com:5432/silmaurdb
+    username: silmaurdb_user
+    password: v0gqbk7LjF1cFBm29LmYRJFI1Zw8R0lS
+
 
 #  datasource:
 #    url: jdbc:h2:mem:testdb
