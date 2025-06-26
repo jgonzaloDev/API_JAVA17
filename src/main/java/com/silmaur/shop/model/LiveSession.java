@@ -18,19 +18,9 @@ import java.time.LocalDateTime;
 public class LiveSession {
   @Id
   private Long id;
-
-  @Column("title")
   private String title;
-
-  @Column("platform")
   private String platform;
-
-  @Column("start_time")
   private LocalDateTime startTime;
-
-  @Column("end_time")
   private LocalDateTime endTime;
-
-  @Column("created_at")
   private LocalDateTime createdAt;
 }

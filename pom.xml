@@ -37,11 +37,16 @@
 			<scope>runtime</scope>
 		</dependency>-->
 		<!-- Driver R2DBC para PostgreSQL -->
+		<!-- https://mvnrepository.com/artifact/io.r2dbc/r2dbc-postgresql -->
 		<dependency>
 			<groupId>org.postgresql</groupId>
 			<artifactId>r2dbc-postgresql</artifactId>
 			<version>1.0.5.RELEASE</version>
 		</dependency>
+
+
+
+
 		<!-- Driver JDBC para PostgreSQL (opcional, pero útil para herramientas externas o test) -->
 		<dependency>
 			<groupId>org.postgresql</groupId>

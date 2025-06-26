@@ -191,5 +191,54 @@ public class GlobalExceptionHandler {
         .build();
   }
 
+  @ExceptionHandler(InvalidSessionDatesException.class)
+  @ResponseStatus(HttpStatus.BAD_REQUEST)
+  public Response<ErrorResponse> handleInvalidSessionDates(InvalidSessionDatesException ex) {
+    log.warn("Fechas inválidas para sesión en vivo: {}", ex.getMessage());
+
+    return Response.<ErrorResponse>builder()
+        .status(HttpStatus.BAD_REQUEST.value())
+        .message(ex.getMessage())
+        .data(ErrorResponse.builder()
+            .errorCode("INVALID_SESSION_DATES")
+            .errorMessage(ex.getMessage())
+            .errors(List.of(new FieldError("endTime", ex.getMessage())))
+            .build())
+        .build();
+  }
+
+  @ExceptionHandler(LiveSessionNotFoundException.class)
+  @ResponseStatus(HttpStatus.NOT_FOUND)
+  public Response<ErrorResponse> handleLiveSessionNotFound(LiveSessionNotFoundException ex) {
+    log.warn("Sesión en vivo no encontrada: {}", ex.getMessage());
+
+    return Response.<ErrorResponse>builder()
+        .status(HttpStatus.NOT_FOUND.value())
+        .message(ex.getMessage())
+        .data(ErrorResponse.builder()
+            .errorCode("SESSION_NOT_FOUND")
+            .errorMessage(ex.getMessage())
+            .errors(null)
+            .build())
+        .build();
+  }
+
+  @ExceptionHandler(LiveSessionAlreadyExistsException.class)
+  @ResponseStatus(HttpStatus.CONFLICT)
+  public Response<ErrorResponse> handleLiveSessionExists(LiveSessionAlreadyExistsException ex) {
+    log.warn("Sesión en vivo duplicada: {}", ex.getMessage());
+
+    return Response.<ErrorResponse>builder()
+        .status(HttpStatus.CONFLICT.value())
+        .message(ex.getMessage())
+        .data(ErrorResponse.builder()
+            .errorCode("SESSION_ALREADY_EXISTS")
+            .errorMessage(ex.getMessage())
+            .errors(List.of(new FieldError("title", ex.getMessage())))
+            .build())
+        .build();
+  }
+
+
 
 }
