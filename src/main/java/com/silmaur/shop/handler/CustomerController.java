@@ -49,18 +49,47 @@ public class CustomerController {
 
 
   @GetMapping(produces = MediaType.APPLICATION_JSON_VALUE)
-  public Flux<CustomerDTO> getAllCustomers(
+  public Mono<ResponseEntity<Map<String, Object>>> getAllCustomers(
       @RequestParam(value = "page", defaultValue = "0") int page,
       @RequestParam(value = "size", defaultValue = "10") int size) {
 
     if (page < 0 || size < 1) {
-      return Flux.error(new IllegalArgumentException("Page and size must be positive numbers."));
+      return Mono.error(new IllegalArgumentException("Page and size must be positive numbers."));
     }
 
-    Flux<CustomerDTO> customersFlux = customerService.getAllCustomers();
-    long skipCount = (long) page * size;
-    return customersFlux.skip(skipCount).take(size);
+    return customerService.getAllCustomers()
+        .collectList()
+        .flatMap(allCustomers -> {
+          int totalElements = allCustomers.size();
+          int totalPages = (int) Math.ceil((double) totalElements / size);
+          int skipCount = page * size;
+          int toIndex = Math.min(skipCount + size, totalElements);
+
+          if (skipCount >= totalElements) {
+            // Página fuera de rango
+            return Mono.just(ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(Map.of("error", "Page out of range")));
+          }
+
+          var pagedCustomers = allCustomers.subList(skipCount, toIndex);
+
+          Map<String, Object> response = new HashMap<>();
+          response.put("content", pagedCustomers);
+          response.put("totalElements", totalElements);
+          response.put("totalPages", totalPages);
+          response.put("page", page);
+
+          return Mono.just(ResponseEntity.ok(response));
+        });
   }
+
+  // Obtener todos los clientes sin paginación (para combos o selects)
+  @GetMapping("/all")
+  public Flux<CustomerDTO> getAllCustomersWithoutPagination() {
+    return customerService.getAllCustomers();
+  }
+
+
 
   // Obtener un cliente por ID
   @GetMapping("/{id}")

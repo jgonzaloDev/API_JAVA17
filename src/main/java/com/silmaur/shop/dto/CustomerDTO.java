@@ -45,13 +45,19 @@ public class CustomerDTO {
   @JsonIgnore
   private LocalDateTime createdAt;
 
-  // ✅ Obligatorio
-  @NotBlank(message = "El nick de Tiktok es obligatorio")
-  private String nickTiktok;
+  /**
+   * Nickname del cliente (puede ser de cualquier red social o plataforma)
+   */
+  @NotBlank(message = "El nickname es obligatorio")
+  private String nickname;
 
   @DecimalMin(value = "0.0", inclusive = true, message = "La apertura debe ser un monto positivo")
   @NotNull(message = "La apertura es obligatoria")
   private BigDecimal initialDeposit;
+  /**
+   * Plataforma de origen del cliente (TikTok, Instagram, etc.)
+   */
+  private String platform;
 
   private ShippingPreferences shippingPreference;
 

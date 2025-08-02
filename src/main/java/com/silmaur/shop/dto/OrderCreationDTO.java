@@ -22,6 +22,9 @@ public class OrderCreationDTO {
   @NotNull(message = "El ID del cliente es obligatorio.")
   private Long customerId;
 
+  private String originType = "MANUAL";
+
+
   /**
    * ID opcional de campaña promocional asociada al pedido.
    */

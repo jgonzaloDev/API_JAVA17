@@ -1,5 +1,6 @@
 package com.silmaur.shop.handler;
 
+import com.silmaur.shop.dto.LiveSessionDTO;
 import com.silmaur.shop.dto.LiveSessionRequestDTO;
 import com.silmaur.shop.dto.LiveSessionSummaryDTO;
 import com.silmaur.shop.dto.response.LiveSessionResponseDTO;
@@ -21,17 +22,17 @@ public class LiveSessionController {
 
   @PostMapping
   @ResponseStatus(HttpStatus.CREATED)
-  public Mono<LiveSessionResponseDTO> create(@RequestBody LiveSessionRequestDTO dto) {
+  public Mono<LiveSessionDTO> create(@RequestBody LiveSessionRequestDTO dto) {
     return service.create(dto);
   }
 
   @GetMapping
-  public Flux<LiveSessionResponseDTO> findAll() {
+  public Flux<LiveSessionDTO> findAll() {
     return service.findAll();
   }
 
   @GetMapping("/{id}")
-  public Mono<ResponseEntity<LiveSessionResponseDTO>> findById(@PathVariable Long id) {
+  public Mono<ResponseEntity<LiveSessionDTO>> findById(@PathVariable Long id) {
     return service.findById(id)
         .map(ResponseEntity::ok);
   }

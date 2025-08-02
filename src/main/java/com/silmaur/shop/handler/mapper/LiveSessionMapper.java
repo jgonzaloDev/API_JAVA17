@@ -1,5 +1,6 @@
 package com.silmaur.shop.handler.mapper;
 
+import com.silmaur.shop.dto.LiveSessionDTO;
 import com.silmaur.shop.dto.LiveSessionRequestDTO;
 import com.silmaur.shop.dto.LiveSessionSummaryDTO;
 import com.silmaur.shop.dto.response.LiveSessionResponseDTO;
@@ -34,6 +35,8 @@ public interface LiveSessionMapper {
       @Mapping(target = "createdAt", ignore = true)
   })
   void updateSessionFromDTO(LiveSessionRequestDTO dto, @MappingTarget LiveSession entity);
+
+  LiveSessionDTO toSessionDto(LiveSession entity); // ✅ agrega esta línea
 
   // 🎯 NUEVO: convertir modelo + título a DTO resumen
   @Mapping(target = "sessionTitle", source = "sessionTitle")

@@ -15,4 +15,6 @@ public interface OrderItemRepository extends ReactiveCrudRepository<OrderItem, L
    * @return Flux con los ítems del pedido.
    */
   Flux<OrderItem> findAllByOrderId(Long orderId);
+  Flux<OrderItem> findByOrderId(Long orderId);
+
 }

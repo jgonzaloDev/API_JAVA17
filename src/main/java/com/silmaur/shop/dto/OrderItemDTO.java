@@ -13,7 +13,7 @@ public class OrderItemDTO {
 
   // 🔧 Campo que estaba faltando
   private Long orderId;
-
+  private Long liveSaleId;
   private Long productId;
   private String productName;
   private BigDecimal price;

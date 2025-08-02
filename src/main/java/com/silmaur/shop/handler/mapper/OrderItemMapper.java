@@ -3,6 +3,7 @@ package com.silmaur.shop.handler.mapper;
 import com.silmaur.shop.dto.OrderItemDTO;
 import com.silmaur.shop.dto.OrderItemCreationDTO;
 import com.silmaur.shop.model.OrderItem;
+import java.util.List;
 import org.mapstruct.*;
 
 /**
@@ -55,4 +56,7 @@ public interface OrderItemMapper {
    */
   @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
   void updateFromDto(OrderItemDTO dto, @MappingTarget OrderItem entity);
+
+  List<OrderItemDTO> toDtoList(List<OrderItem> items);
+
 }

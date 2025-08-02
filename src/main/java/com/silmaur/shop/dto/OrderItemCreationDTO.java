@@ -35,4 +35,10 @@ public class OrderItemCreationDTO {
    */
   @DecimalMin(value = "0.00", inclusive = true, message = "El descuento no puede ser negativo.")
   private BigDecimal discount = BigDecimal.ZERO;
+
+  /**
+   * ID opcional de la venta en vivo asociada a este ítem.
+   * Solo se usa cuando el pedido proviene de una transmisión en vivo.
+   */
+  private Long liveSaleId;
 }

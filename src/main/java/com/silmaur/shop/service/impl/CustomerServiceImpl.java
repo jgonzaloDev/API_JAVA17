@@ -72,7 +72,8 @@ public class CustomerServiceImpl implements CustomerService {
               .email(customerDto.getEmail())
               .documentId(customerDto.getDocumentId())
               .initialDeposit(customerDto.getInitialDeposit())
-              .nickTiktok(customerDto.getNickTiktok())
+              .nickname(customerDto.getNickname())
+              .platform(customerDto.getPlatform())
               .shippingPreference(customerDto.getShippingPreference())
               .createdAt(existingCustomer.getCreatedAt())
               .build();

@@ -11,8 +11,10 @@ public class OrderDTO {
   private Long customerId;
   private Long campaignId;
   private Long liveSessionId;
-  private BigDecimal apertura;
+  private BigDecimal aperture;
   private BigDecimal totalAmount;
+  private String originType; // "LIVE" o "MANUAL"
+  private List<Long> liveSaleIds; // IDs de las ventas en vivo vinculadas, si existen
   private String status;
   private Boolean accumulation;
   private LocalDateTime paymentDueDate;
@@ -20,4 +22,6 @@ public class OrderDTO {
   private LocalDateTime updatedAt;
   private List<OrderItemDTO> items;
   private BigDecimal realAmountToPay;
+
 }
+

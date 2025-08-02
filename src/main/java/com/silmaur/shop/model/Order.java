@@ -1,7 +1,10 @@
 package com.silmaur.shop.model;
 
+import java.util.List;
 import lombok.*;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.annotation.Transient;
+import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.data.relational.core.mapping.Table;
 
 import java.math.BigDecimal;
@@ -65,6 +68,9 @@ public class Order {
    */
   private LocalDateTime paymentDueDate;
 
+  @Column("origin_type")
+  private String originType; // "LIVE" o "MANUAL"
+
   /**
    * Días transcurridos sin recibir un pago completo (campo interno).
    */
@@ -83,4 +89,7 @@ public class Order {
    * Monto real que debe pagar el cliente
    */
   private BigDecimal realAmountToPay;
+  @Transient // Importante si estás usando Spring Data JDBC
+  private List<OrderItem> items;
+
 }

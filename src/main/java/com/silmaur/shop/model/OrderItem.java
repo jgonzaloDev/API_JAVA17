@@ -2,6 +2,7 @@ package com.silmaur.shop.model;
 
 import lombok.*;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.data.relational.core.mapping.Table;
 
 import java.math.BigDecimal;
@@ -35,6 +36,9 @@ public class OrderItem {
    * Identificador del producto vendido.
    */
   private Long productId;
+
+  @Column("live_sale_id")
+  private Long liveSaleId; // opcional, vinculado a una venta en vivo
 
   /**
    * Nombre del producto en el momento de la venta (puede diferir si el nombre del producto cambia).

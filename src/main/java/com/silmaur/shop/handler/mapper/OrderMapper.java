@@ -10,9 +10,13 @@ import org.mapstruct.*;
  * Mapper para convertir entre las entidades Order y los DTO asociados.
  * Utiliza MapStruct para generación automática de implementación.
  */
-@Mapper(componentModel = "spring",
+@Mapper(
+    componentModel = "spring",
+    uses = {OrderItemMapper.class},
     nullValueCheckStrategy = NullValueCheckStrategy.ALWAYS,
-    nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
+    nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE
+)
+
 public interface OrderMapper {
 
   @Mappings({
@@ -27,8 +31,9 @@ public interface OrderMapper {
   Order toEntity(OrderCreationDTO dto, BigDecimal totalAmount, String status, Integer diasSinPagar);
 
   @Mappings({
-      @Mapping(source = "aperture", target = "apertura"),
-      @Mapping(source = "realAmountToPay", target = "realAmountToPay") // ✅ Asegura que se mapee
+      @Mapping(source = "aperture", target = "aperture"),
+      @Mapping(source = "realAmountToPay", target = "realAmountToPay"), // ✅ Asegura que se mapee
+      @Mapping(source = "items", target = "items") // ✅ esta línea agrega el mapeo de ítems
   })
   OrderDTO toDto(Order order);
 

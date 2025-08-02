@@ -61,8 +61,10 @@ public class Customer {
   /**
    * Nickname del cliente en TikTok.
    */
-  @Column("nick_tiktok")
-  private String nickTiktok;
+  @Column("nickname")
+  private String nickname;
+  @Column("platform")
+  private String platform;
 
   /**
    * Depósito inicial del cliente.

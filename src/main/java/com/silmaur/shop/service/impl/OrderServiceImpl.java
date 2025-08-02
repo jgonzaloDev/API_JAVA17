@@ -12,6 +12,7 @@ import com.silmaur.shop.model.Product;
 import com.silmaur.shop.repository.*;
 import com.silmaur.shop.service.OrderService;
 import java.nio.charset.StandardCharsets;
+import java.util.Objects;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -40,6 +41,7 @@ public class OrderServiceImpl implements OrderService {
 
   private final OrderMapper orderMapper;
   private final OrderItemMapper orderItemMapper;
+  private final LiveSessionSaleRepository liveSessionSaleRepository;
 
   @Override
   @Transactional
@@ -52,7 +54,6 @@ public class OrderServiceImpl implements OrderService {
             .flatMap(orderCount -> {
               boolean isFirstOrder = orderCount == 0;
 
-              // Si es el primer pedido, aplicamos la apertura como saldo disponible
               if (isFirstOrder) {
                 customer.setRemainingDeposit(customer.getInitialDeposit());
               }
@@ -75,13 +76,8 @@ public class OrderServiceImpl implements OrderService {
                         .collect(Collectors.toMap(Product::getId, p -> p));
 
                     BigDecimal totalPedido = calcularTotal(dto.getItems(), productMap);
-
-                    // ⚠️ Lo que realmente debe pagar el cliente (descontando saldo disponible)
                     BigDecimal realAmountToPay = totalPedido.subtract(saldoDisponible).max(BigDecimal.ZERO);
-
-                    // 💰 Si sobra saldo, se actualiza como nuevo saldo a favor
                     BigDecimal nuevoSaldoAFavor = saldoDisponible.subtract(totalPedido);
-
                     String estado = realAmountToPay.compareTo(BigDecimal.ZERO) == 0 ? "PAGADO" : "NO_PAGADO";
 
                     LocalDateTime paymentDueDate = Optional.ofNullable(dto.getPaymentDueDate())
@@ -90,10 +86,11 @@ public class OrderServiceImpl implements OrderService {
 
                     Order order = orderMapper.toEntity(dto, totalPedido, estado, diasSinPagar);
                     order.setAperture(isFirstOrder ? customer.getInitialDeposit() : BigDecimal.ZERO);
-                    order.setRealAmountToPay(realAmountToPay); // ✅ NUEVO CAMPO
+                    order.setRealAmountToPay(realAmountToPay);
                     order.setPaymentDueDate(paymentDueDate);
                     order.setCreatedAt(LocalDateTime.now());
                     order.setUpdatedAt(LocalDateTime.now());
+                    order.setOriginType(dto.getOriginType() != null ? dto.getOriginType() : "MANUAL");
 
                     return orderRepository.save(order).flatMap(savedOrder -> {
                       List<OrderItem> items = dto.getItems().stream().map(item -> {
@@ -103,10 +100,14 @@ public class OrderServiceImpl implements OrderService {
                         OrderItem entity = orderItemMapper.toEntity(savedOrder.getId(), item);
                         entity.setProductName(product.getName());
                         entity.setPrice(product.getSalePrice());
+
+                        if ("LIVE".equalsIgnoreCase(order.getOriginType()) && item.getLiveSaleId() != null) {
+                          entity.setLiveSaleId(item.getLiveSaleId());
+                        }
+
                         return entity;
                       }).toList();
 
-                      // ✅ Actualizamos el saldo del cliente
                       customer.setRemainingDeposit(nuevoSaldoAFavor.compareTo(BigDecimal.ZERO) > 0
                           ? nuevoSaldoAFavor
                           : BigDecimal.ZERO);
@@ -114,9 +115,29 @@ public class OrderServiceImpl implements OrderService {
                       return customerRepository.save(customer)
                           .then(productRepository.saveAll(productMap.values()).then())
                           .then(orderItemRepository.saveAll(items).collectList())
+                          .flatMap(savedItems -> {
+                            if ("LIVE".equalsIgnoreCase(order.getOriginType())) {
+                              List<Long> liveSaleIds = dto.getItems().stream()
+                                  .map(OrderItemCreationDTO::getLiveSaleId)
+                                  .filter(Objects::nonNull)
+                                  .toList();
+
+                              if (!liveSaleIds.isEmpty()) {
+                                return liveSessionSaleRepository.findAllById(liveSaleIds)
+                                    .collectList()
+                                    .flatMap(sales -> {
+                                      sales.forEach(sale -> sale.setOrderId(savedOrder.getId()));
+                                      return liveSessionSaleRepository.saveAll(sales).then();
+                                    })
+                                    .thenReturn(savedItems);
+                              }
+                            }
+
+                            return Mono.just(savedItems);
+                          })
                           .map(savedItems -> {
                             OrderDTO response = orderMapper.toDto(savedOrder);
-                            response.setApertura(order.getAperture());
+                            response.setAperture(order.getAperture());
                             response.setItems(savedItems.stream().map(orderItemMapper::toDto).toList());
                             return response;
                           });
@@ -124,15 +145,6 @@ public class OrderServiceImpl implements OrderService {
                   });
             }));
   }
-
-
-
-
-
-
-
-
-
 
   private BigDecimal calcularTotal(List<OrderItemCreationDTO> items, Map<Long, Product> productMap) {
     return items.stream()
@@ -274,7 +286,7 @@ public class OrderServiceImpl implements OrderService {
           .append(customerName).append(",")
           .append(order.getCampaignId() != null ? order.getCampaignId() : "").append(",")
           .append(order.getLiveSessionId() != null ? order.getLiveSessionId() : "").append(",")
-          .append(order.getApertura()).append(",")
+          .append(order.getAperture()).append(",")
           .append(order.getTotalAmount()).append(",")
           .append(order.getStatus()).append(",")
           .append(order.getAccumulation()).append(",")
