@@ -9,4 +9,6 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface CategoryRepository extends ReactiveCrudRepository<Category, Long> {
   Mono<Category> findByName(String name);
+  // Nuevo: busca ignorando mayúsculas/minúsculas
+  Mono<Category> findByNameIgnoreCase(String name);
 }

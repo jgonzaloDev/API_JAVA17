@@ -1,6 +1,7 @@
 package com.silmaur.shop.handler;
 
 import com.silmaur.shop.dto.ProductDTO;
+import com.silmaur.shop.dto.ProductQuickDTO;
 import com.silmaur.shop.dto.Response;
 import com.silmaur.shop.exception.DocumentIdAlreadyExistsException;
 import com.silmaur.shop.exception.SalePriceLessThanPurchasePriceException;
@@ -35,6 +36,17 @@ public class ProductController {
         .map(product -> ResponseEntity.status(HttpStatus.CREATED)
             .body(Response.success("PRODUCTO CREADO CORRECTAMENTE", productMapper.toDto(product))));
   }
+
+
+  @PostMapping("/quick")
+  public Mono<ResponseEntity<Response<ProductDTO>>> createProductQuick(
+      @RequestBody ProductQuickDTO quickDTO) {
+
+    return productService.createProductQuick(quickDTO)
+        .map(product -> ResponseEntity.status(HttpStatus.CREATED)
+            .body(Response.success("PRODUCTO RÁPIDO CREADO CORRECTAMENTE", productMapper.toDto(product))));
+  }
+
 
 
 
