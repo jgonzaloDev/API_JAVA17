@@ -57,6 +57,13 @@ public class DraftOrderServiceImpl implements DraftOrderService {
   @Override
   public Flux<DraftOrderDTO> findByLiveSessionId(Long sessionId) {
     return draftOrderRepository.findByLiveSessionId(sessionId)
+        // 🟢 Ordenar completados por completedAt DESC, pendientes se quedan como están
+        .sort((o1, o2) -> {
+          if ("COMPLETADO".equals(o1.getStatus()) && "COMPLETADO".equals(o2.getStatus())) {
+            return o2.getCompletedAt().compareTo(o1.getCompletedAt());
+          }
+          return 0; // no altera el orden de pendientes
+        })
         .flatMap(draftOrder ->
             draftOrderItemRepository.findByDraftOrderId(draftOrder.getId())
                 .flatMap(item ->
@@ -75,18 +82,21 @@ public class DraftOrderServiceImpl implements DraftOrderService {
                     .nickname(draftOrder.getNickname())
                     .totalAmount(draftOrder.getTotalAmount())
                     .createdAt(draftOrder.getCreatedAt())
+                    .completedAt(draftOrder.getCompletedAt()) // 🟢 agregado
                     .status(draftOrder.getStatus())
                     .items(items.stream().map(item -> DraftOrderItemDTO.builder()
                         .id(item.getId())
                         .draftOrderId(item.getDraftOrderId())
                         .productId(item.getProductId())
-                        .productName(item.getProductName()) // 🟢 ahora sí lo pasamos al DTO
+                        .productName(item.getProductName())
                         .quantity(item.getQuantity())
                         .unitPrice(item.getUnitPrice())
                         .build()).toList())
                     .build())
         );
   }
+
+
 
 
   @Override
@@ -117,64 +127,73 @@ public class DraftOrderServiceImpl implements DraftOrderService {
   public Mono<OrderDTO> confirmDraftOrder(Long draftOrderId) {
     return draftOrderRepository.findById(draftOrderId)
         .switchIfEmpty(Mono.error(new NotFoundException("Draft order no encontrado")))
-        .flatMap(draftOrder ->
-            draftOrderItemRepository.findByDraftOrderId(draftOrderId)
-                .collectList()
-                .flatMap(draftItems -> {
-                  // 1. Crear Order base
-                  Order order = Order.builder()
-                      .customerId(draftOrder.getCustomerId())
-                      .liveSessionId(draftOrder.getLiveSessionId())
-                      .campaignId(null)
-                      .aperture(BigDecimal.ZERO)
-                      .totalAmount(draftOrder.getTotalAmount())
-                      .realAmountToPay(draftOrder.getTotalAmount())
-                      .originType("LIVE")
-                      .accumulation(false)
-                      .status("NO_PAGADO")
-                      .paymentDueDate(LocalDateTime.now().plusDays(7))
-                      .createdAt(LocalDateTime.now())
-                      .updatedAt(LocalDateTime.now())
-                      .build();
+        .flatMap(draftOrder -> {
 
-                  // 2. Guardar Order
-                  return orderRepository.save(order)
-                      .flatMap(savedOrder ->
-                          Flux.fromIterable(draftItems)
-                              .flatMap(draftItem ->
-                                  productRepository.findById(draftItem.getProductId())
-                                      .switchIfEmpty(Mono.error(new NotFoundException("Producto no encontrado: " + draftItem.getProductId())))
-                                      .map(product ->
-                                          OrderItem.builder()
-                                              .orderId(savedOrder.getId())
-                                              .productId(draftItem.getProductId())
-                                              .productName(product.getName())
-                                              .quantity(draftItem.getQuantity())
-                                              .price(draftItem.getUnitPrice())
-                                              .discount(BigDecimal.ZERO)
-                                              .build()
-                                      )
-                              )
-                              .collectList()
-                              .flatMap(orderItems -> orderItemRepository.saveAll(orderItems).then(Mono.just(savedOrder)))
-                      );
+          // 🟢 Marcar como completado en la entidad DraftOrder
+          draftOrder.setCompletedAt(LocalDateTime.now());
+          draftOrder.setStatus("COMPLETADO");
+
+          return draftOrderRepository.save(draftOrder) // Guardar cambios en el borrador antes de crear Order
+              .then(
+                  draftOrderItemRepository.findByDraftOrderId(draftOrderId)
+                      .collectList()
+                      .flatMap(draftItems -> {
+                        // 1️⃣ Crear Order base
+                        Order order = Order.builder()
+                            .customerId(draftOrder.getCustomerId())
+                            .liveSessionId(draftOrder.getLiveSessionId())
+                            .campaignId(null)
+                            .aperture(BigDecimal.ZERO)
+                            .totalAmount(draftOrder.getTotalAmount())
+                            .realAmountToPay(draftOrder.getTotalAmount())
+                            .originType("LIVE")
+                            .accumulation(false)
+                            .status("NO_PAGADO")
+                            .paymentDueDate(LocalDateTime.now().plusDays(7))
+                            .createdAt(LocalDateTime.now())
+                            .updatedAt(LocalDateTime.now())
+                            .build();
+
+                        // 2️⃣ Guardar Order
+                        return orderRepository.save(order)
+                            .flatMap(savedOrder ->
+                                Flux.fromIterable(draftItems)
+                                    .flatMap(draftItem ->
+                                        productRepository.findById(draftItem.getProductId())
+                                            .switchIfEmpty(Mono.error(new NotFoundException(
+                                                "Producto no encontrado: " + draftItem.getProductId())))
+                                            .map(product ->
+                                                OrderItem.builder()
+                                                    .orderId(savedOrder.getId())
+                                                    .productId(draftItem.getProductId())
+                                                    .productName(product.getName())
+                                                    .quantity(draftItem.getQuantity())
+                                                    .price(draftItem.getUnitPrice())
+                                                    .discount(BigDecimal.ZERO)
+                                                    .build()
+                                            )
+                                    )
+                                    .collectList()
+                                    .flatMap(orderItems -> orderItemRepository.saveAll(orderItems)
+                                        .then(Mono.just(savedOrder))
+                                    )
+                            );
+                      })
+              );
+        })
+        // 🔹 Ya NO eliminamos el draft order
+        .flatMap(savedOrder ->
+            orderItemRepository.findByOrderId(savedOrder.getId())
+                .collectList()
+                .map(items -> {
+                  savedOrder.setItems(items);
+                  return savedOrder;
                 })
         )
-        .flatMap(savedOrder ->
-            draftOrderItemRepository.findByDraftOrderId(draftOrderId)
-                .flatMap(draftOrderItemRepository::delete)
-                .then(draftOrderRepository.deleteById(draftOrderId))
-                .then(orderItemRepository.findByOrderId(savedOrder.getId())
-                    .collectList()
-                    .map(items -> {
-                      savedOrder.setItems(items);
-                      return savedOrder;
-                    })
-                )
-        )
         .map(orderMapper::toDto);
-
   }
+
+
   @Override
   public Mono<DraftOrder> updateDraftOrder(Long id, DraftOrderDTO dto) {
     return draftOrderRepository.findById(id)

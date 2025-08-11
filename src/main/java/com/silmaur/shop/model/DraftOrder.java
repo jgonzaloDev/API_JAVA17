@@ -34,6 +34,8 @@ public class DraftOrder {
 
   @Column("created_at")
   private LocalDateTime createdAt;
+  @Column("completed_at")
+  private LocalDateTime completedAt;
 
   @Column("status")
   private String status;

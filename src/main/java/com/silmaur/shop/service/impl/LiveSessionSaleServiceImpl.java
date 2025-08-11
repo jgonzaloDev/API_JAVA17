@@ -10,15 +10,14 @@ import com.silmaur.shop.repository.LiveSessionRepository;
 import com.silmaur.shop.repository.LiveSessionSaleRepository;
 import com.silmaur.shop.repository.ProductRepository;
 import com.silmaur.shop.service.LiveSessionSaleService;
-
-import java.math.BigDecimal;
-import java.time.LocalDateTime;
-
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
 
 @Service
 @Slf4j
@@ -87,6 +86,7 @@ public class LiveSessionSaleServiceImpl implements LiveSessionSaleService {
                   sale.setCustomerId(customerId);
                   sale.setQuantity(cantidadVendida);
                   sale.setUnitPrice(dto.getUnitPrice());
+                  sale.setArchived(false); // 🚀 por defecto, no archivada
 
                   return repository.save(sale)
                       .flatMap(saved -> repository.findById(saved.getId()))
@@ -109,31 +109,63 @@ public class LiveSessionSaleServiceImpl implements LiveSessionSaleService {
 
   @Override
   public Flux<LiveSessionSaleResponseDTO> findBySession(Long liveSessionId) {
+    // 🔹 Ventas visibles (no archivadas)
+    return repository.findByLiveSessionIdAndArchivedFalse(liveSessionId)
+        .flatMap(this::mapToResponse);
+  }
+
+  @Override
+  public Flux<LiveSessionSaleResponseDTO> findAllBySession(Long liveSessionId) {
     return repository.findByLiveSessionId(liveSessionId)
         .flatMap(sale -> {
-          Mono<String> customerNameMono;
-
-          if (sale.getCustomerId() != null) {
-            customerNameMono = customerRepository.findById(sale.getCustomerId())
-                .map(Customer::getNickname)
-                .defaultIfEmpty("N/A");
-          } else {
-            customerNameMono = Mono.just("N/A");
-          }
-
-          return customerNameMono.map(customerName -> {
-            LiveSessionSaleResponseDTO dto = new LiveSessionSaleResponseDTO();
-            dto.setId(sale.getId());
-            dto.setProductId(sale.getProductId());
-            dto.setQuantity(sale.getQuantity());
-            dto.setUnitPrice(sale.getUnitPrice());
-            dto.setTotalAmount(sale.getTotalAmount());
-            dto.setCreatedAt(sale.getCreatedAt());
-            dto.setProductName("Producto #" + sale.getProductId());
-            dto.setCustomerId(sale.getCustomerId());
-            dto.setCustomerName(customerName);
-            return dto;
-          });
+          log.info("🔍 Histórico → ID: {}, ProdID: {}, ClienteID: {}",
+              sale.getId(), sale.getProductId(), sale.getCustomerId()); // si tienes getter
+          return mapToResponse(sale);
         });
   }
+
+
+  @Override
+  public Mono<Void> archiveSalesByCustomer(Long liveSessionId, Long customerId) {
+    // 🔹 Marca todas las ventas del cliente como archivadas
+    return repository.findByLiveSessionIdAndCustomerId(liveSessionId, customerId)
+        .flatMap(sale -> {
+          sale.setArchived(true);
+          return repository.save(sale);
+        })
+        .then();
+  }
+
+  private Mono<LiveSessionSaleResponseDTO> mapToResponse(LiveSessionSale sale) {
+    Mono<String> customerNameMono = Mono.just("N/A");
+    if (sale.getCustomerId() != null) {
+      customerNameMono = customerRepository.findById(sale.getCustomerId())
+          .map(Customer::getNickname)
+          .defaultIfEmpty("N/A");
+    }
+
+    // 🔹 Cargar nombre real del producto
+    Mono<String> productNameMono = Mono.just("Producto N/A");
+    if (sale.getProductId() != null) {
+      productNameMono = productRepository.findById(sale.getProductId())
+          .map(p -> p.getName() != null ? p.getName() : "Producto N/A")
+          .defaultIfEmpty("Producto N/A");
+    }
+
+    return Mono.zip(customerNameMono, productNameMono)
+        .map(tuple -> {
+          LiveSessionSaleResponseDTO dto = new LiveSessionSaleResponseDTO();
+          dto.setId(sale.getId());
+          dto.setProductId(sale.getProductId());
+          dto.setQuantity(sale.getQuantity());
+          dto.setUnitPrice(sale.getUnitPrice());
+          dto.setTotalAmount(sale.getTotalAmount());
+          dto.setCreatedAt(sale.getCreatedAt());
+          dto.setCustomerId(sale.getCustomerId());
+          dto.setCustomerName(tuple.getT1()); // nombre cliente
+          dto.setProductName(tuple.getT2());  // nombre producto
+          return dto;
+        });
+  }
+
 }

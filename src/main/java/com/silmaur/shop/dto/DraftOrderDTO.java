@@ -27,6 +27,7 @@ public class DraftOrderDTO {
   private BigDecimal totalAmount;
 
   private LocalDateTime createdAt;
+  private LocalDateTime completedAt; // 🟢 nuevo
 
   private String status;
 

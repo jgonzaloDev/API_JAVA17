@@ -41,4 +41,5 @@ public class LiveSessionSale {
 
   @Column("created_at")
   private LocalDateTime createdAt;
+  private Boolean archived;
 }
