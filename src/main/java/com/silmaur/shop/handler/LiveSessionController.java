@@ -7,6 +7,7 @@ import com.silmaur.shop.dto.response.LiveSessionResponseDTO;
 import com.silmaur.shop.model.LiveSessionSummary;
 import com.silmaur.shop.service.LiveSessionService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -16,6 +17,7 @@ import reactor.core.publisher.Mono;
 @RestController
 @RequestMapping("/api/live-sessions")
 @RequiredArgsConstructor
+@Slf4j
 public class LiveSessionController {
 
   private final LiveSessionService service;
@@ -23,6 +25,7 @@ public class LiveSessionController {
   @PostMapping
   @ResponseStatus(HttpStatus.CREATED)
   public Mono<LiveSessionDTO> create(@RequestBody LiveSessionRequestDTO dto) {
+    log.debug(">>> REQUEST startTime={}, endTime={}", dto.getStartTime(), dto.getEndTime());
     return service.create(dto);
   }
 
@@ -49,4 +52,12 @@ public class LiveSessionController {
     return service.getSessionSummary(id)
         .map(ResponseEntity::ok);
   }
+
+  // 🆕 NUEVO: Finalizar sesión en vivo
+  @PatchMapping("/{id}/finalize")
+  public Mono<ResponseEntity<Void>> finalizeSession(@PathVariable Long id) {
+    return service.finalizeSession(id)
+        .then(Mono.just(ResponseEntity.ok().build()));
+  }
+
 }

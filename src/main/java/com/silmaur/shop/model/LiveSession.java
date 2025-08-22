@@ -23,4 +23,5 @@ public class LiveSession {
   private LocalDateTime startTime;
   private LocalDateTime endTime;
   private LocalDateTime createdAt;
+  private String status;
 }

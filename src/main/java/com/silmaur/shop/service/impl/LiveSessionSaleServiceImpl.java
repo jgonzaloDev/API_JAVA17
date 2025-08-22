@@ -31,35 +31,49 @@ public class LiveSessionSaleServiceImpl implements LiveSessionSaleService {
 
   @Override
   public Mono<LiveSessionSaleResponseDTO> create(LiveSessionSaleRequestDTO dto) {
-    log.info("📦 Venta recibida → sessionId: {}, productId: {}, customerId: {}, quantity: {}, unitPrice: {}, nickname: {}",
+    log.info("📦 Venta recibida → sessionId: {}, productId: {}, customerId: {}, quantity: {}, unitPrice: {}, nickname: {}, initialDeposit: {}",
         dto.getLiveSessionId(),
         dto.getProductId(),
         dto.getCustomerId(),
         dto.getQuantity(),
         dto.getUnitPrice(),
-        dto.getNickname());
+        dto.getNickname(),
+        dto.getInitialDeposit());
 
     Mono<Customer> customerMono;
 
     if (dto.getCustomerId() != null) {
+      // 🔹 Cliente ya existe → lo buscamos
       customerMono = customerRepository.findById(dto.getCustomerId());
+
     } else if (dto.getNickname() != null && !dto.getNickname().isBlank()) {
+      // 🔹 Crear cliente rápido si no existe
       customerMono = liveSessionRepository.findById(dto.getLiveSessionId())
           .flatMap(session ->
               customerRepository.findByNicknameAndPlatform(dto.getNickname(), session.getPlatform())
                   .switchIfEmpty(
-                      customerRepository.save(
-                          Customer.builder()
-                              .nickname(dto.getNickname())
-                              .platform(session.getPlatform())
-                              .initialDeposit(BigDecimal.TEN)
-                              .shippingPreference(ShippingPreferences.ACCUMULATE)
-                              .remainingDeposit(BigDecimal.ZERO)
-                              .createdAt(LocalDateTime.now())
-                              .build()
-                      )
+                      Mono.defer(() -> {
+                        BigDecimal depositoInicial = dto.getInitialDeposit() != null
+                            ? dto.getInitialDeposit()
+                            : BigDecimal.TEN;
+
+                        log.info("🆕 Creando cliente rápido '{}' en plataforma {} con depósito inicial {}",
+                            dto.getNickname(), session.getPlatform(), depositoInicial);
+
+                        return customerRepository.save(
+                            Customer.builder()
+                                .nickname(dto.getNickname())
+                                .platform(session.getPlatform())
+                                .initialDeposit(depositoInicial)
+                                .remainingDeposit(depositoInicial) // ✅ saldo = depósito inicial
+                                .shippingPreference(ShippingPreferences.ACCUMULATE)
+                                .createdAt(LocalDateTime.now())
+                                .build()
+                        );
+                      })
                   )
           );
+
     } else {
       return Mono.error(new IllegalArgumentException("Debe seleccionarse un cliente o ingresar un nickname."));
     }
@@ -89,7 +103,22 @@ public class LiveSessionSaleServiceImpl implements LiveSessionSaleService {
                   sale.setArchived(false); // 🚀 por defecto, no archivada
 
                   return repository.save(sale)
-                      .flatMap(saved -> repository.findById(saved.getId()))
+                      .flatMap(saved -> {
+                        // 🔹 Calcular el total de la venta
+                        BigDecimal totalVenta = dto.getUnitPrice().multiply(BigDecimal.valueOf(cantidadVendida));
+
+                        // 🔹 Descontar del saldo del cliente
+                        return customerRepository.findById(customerId)
+                            .flatMap(c -> {
+                              BigDecimal nuevoSaldo = c.getRemainingDeposit().subtract(totalVenta);
+                              log.info("💰 Actualizando saldo de cliente {} → {} - {} = {}",
+                                  c.getNickname(), c.getRemainingDeposit(), totalVenta, nuevoSaldo);
+
+                              c.setRemainingDeposit(nuevoSaldo);
+                              return customerRepository.save(c);
+                            })
+                            .then(repository.findById(saved.getId())); // ✅ continuamos con la venta guardada
+                      })
                       .map(loaded -> {
                         LiveSessionSaleResponseDTO response = new LiveSessionSaleResponseDTO();
                         response.setId(loaded.getId());
@@ -106,6 +135,9 @@ public class LiveSessionSaleServiceImpl implements LiveSessionSaleService {
           });
     });
   }
+
+
+
 
   @Override
   public Flux<LiveSessionSaleResponseDTO> findBySession(Long liveSessionId) {

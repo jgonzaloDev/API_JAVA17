@@ -23,14 +23,5 @@ public class LiveSessionDTO {
   private LocalDateTime endTime;
   @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
   private LocalDateTime createdAt;
-
-  public String getStatus() {
-    LocalDateTime now = LocalDateTime.now();
-    if (startTime != null && endTime != null) {
-      if (now.isBefore(startTime)) return "PROGRAMADA";
-      if (now.isAfter(endTime)) return "FINALIZADA";
-      return "ACTIVA";
-    }
-    return "DESCONOCIDO";
-  }
+  private String status; // ✅ ahora el backend lo manda directo
 }

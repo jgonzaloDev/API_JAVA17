@@ -21,24 +21,30 @@ import org.mapstruct.NullValuePropertyMappingStrategy;
 )
 public interface LiveSessionMapper {
 
-  // ya existentes
+  // Crear entidad desde request (id/createdAt/status los maneja el backend)
   @Mappings({
       @Mapping(target = "id", ignore = true),
-      @Mapping(target = "createdAt", ignore = true)
+      @Mapping(target = "createdAt", ignore = true),
+      @Mapping(target = "status", ignore = true)
   })
   LiveSession toEntity(LiveSessionRequestDTO dto);
 
+  // Mapper “clásico” si lo usas en otros endpoints
   LiveSessionResponseDTO toDto(LiveSession entity);
 
+  // Actualización parcial (no permitir tocar id/createdAt/status desde el DTO)
   @Mappings({
       @Mapping(target = "id", ignore = true),
-      @Mapping(target = "createdAt", ignore = true)
+      @Mapping(target = "createdAt", ignore = true),
+      @Mapping(target = "status", ignore = true)
   })
   void updateSessionFromDTO(LiveSessionRequestDTO dto, @MappingTarget LiveSession entity);
 
-  LiveSessionDTO toSessionDto(LiveSession entity); // ✅ agrega esta línea
+  // Enviar al front el status real guardado en BD
+  @Mapping(target = "status", source = "status")
+  LiveSessionDTO toSessionDto(LiveSession entity);
 
-  // 🎯 NUEVO: convertir modelo + título a DTO resumen
+  // Resumen de sesión
   @Mapping(target = "sessionTitle", source = "sessionTitle")
   LiveSessionSummaryDTO toSummaryDto(LiveSessionSummary summary, @Context String sessionTitle);
 }

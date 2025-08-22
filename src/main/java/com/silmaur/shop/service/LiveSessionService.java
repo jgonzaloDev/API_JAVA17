@@ -17,4 +17,6 @@ public interface LiveSessionService {
   Mono<Void> deleteById(Long id);
 
   Mono<LiveSessionSummaryDTO> getSessionSummary(Long sessionId);
+  Mono<Void> finalizeSession(Long id);
+
 }
