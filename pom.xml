@@ -31,30 +31,19 @@
 			<artifactId>spring-boot-starter-data-r2dbc</artifactId>
 		</dependency>
 
-		<!-- Driver R2DBC para H2 -->
-	<!--	<dependency>
-			<groupId>io.r2dbc</groupId>
-			<artifactId>r2dbc-h2</artifactId>
-			<scope>runtime</scope>
-		</dependency>-->
 		<!-- Driver R2DBC para PostgreSQL -->
-		<!-- https://mvnrepository.com/artifact/io.r2dbc/r2dbc-postgresql -->
 		<dependency>
 			<groupId>org.postgresql</groupId>
 			<artifactId>r2dbc-postgresql</artifactId>
 			<version>1.0.5.RELEASE</version>
 		</dependency>
 
-
-
-
-		<!-- Driver JDBC para PostgreSQL (opcional, pero útil para herramientas externas o test) -->
+		<!-- Driver JDBC para PostgreSQL -->
 		<dependency>
 			<groupId>org.postgresql</groupId>
 			<artifactId>postgresql</artifactId>
 			<version>42.7.1</version>
 		</dependency>
-
 
 		<!-- Validación con Jakarta -->
 		<dependency>
@@ -63,14 +52,8 @@
 			<version>3.0.2</version>
 		</dependency>
 
-		<!-- Seguridad (Spring Security) -->
-<!--		<dependency>
-			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-starter-security</artifactId>
-		</dependency>-->
-
-		<!-- JSON Web Token -->
-		<!--<dependency>
+		<!-- JSON Web Token (JJWT) -->
+		<dependency>
 			<groupId>io.jsonwebtoken</groupId>
 			<artifactId>jjwt-api</artifactId>
 			<version>0.11.5</version>
@@ -86,7 +69,7 @@
 			<artifactId>jjwt-jackson</artifactId>
 			<version>0.11.5</version>
 			<scope>runtime</scope>
-		</dependency>-->
+		</dependency>
 
 		<!-- Hibernate Validator -->
 		<dependency>
@@ -107,14 +90,15 @@
 			<version>1.5.5.Final</version>
 			<scope>provided</scope>
 		</dependency>
+
+		<!-- AspectJ -->
 		<dependency>
 			<groupId>org.aspectj</groupId>
 			<artifactId>aspectjweaver</artifactId>
 			<version>1.9.19</version>
 		</dependency>
 
-
-		<!-- Lombok para reducir boilerplate -->
+		<!-- Lombok -->
 		<dependency>
 			<groupId>org.projectlombok</groupId>
 			<artifactId>lombok</artifactId>
@@ -126,6 +110,8 @@
 			<version>0.2.0</version>
 			<scope>provided</scope>
 		</dependency>
+
+		<!-- Jackson -->
 		<dependency>
 			<groupId>com.fasterxml.jackson.core</groupId>
 			<artifactId>jackson-databind</artifactId>
@@ -138,9 +124,8 @@
 			<groupId>com.fasterxml.jackson.datatype</groupId>
 			<artifactId>jackson-datatype-jsr310</artifactId>
 		</dependency>
-
-
 	</dependencies>
+
 	<build>
 		<plugins>
 			<!-- Plugin del compilador -->
@@ -168,6 +153,7 @@
 					</annotationProcessorPaths>
 				</configuration>
 			</plugin>
+
 			<!-- Plugin de Spring Boot -->
 			<plugin>
 				<groupId>org.springframework.boot</groupId>
