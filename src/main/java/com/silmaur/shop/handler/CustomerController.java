@@ -7,6 +7,7 @@ import com.silmaur.shop.service.CustomerService;
 import jakarta.validation.Valid;
 import java.math.BigDecimal;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -66,13 +67,13 @@ public class CustomerController {
           int skipCount = page * size;
           int toIndex = Math.min(skipCount + size, totalElements);
 
-          if (skipCount >= totalElements) {
-            // Página fuera de rango
-            return Mono.just(ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                .body(Map.of("error", "Page out of range")));
-          }
+          List<CustomerDTO> pagedCustomers;
 
-          var pagedCustomers = allCustomers.subList(skipCount, toIndex);
+          if (skipCount >= totalElements) {
+            pagedCustomers = List.of();
+          } else {
+            pagedCustomers = allCustomers.subList(skipCount, toIndex);
+          }
 
           Map<String, Object> response = new HashMap<>();
           response.put("content", pagedCustomers);
@@ -83,6 +84,7 @@ public class CustomerController {
           return Mono.just(ResponseEntity.ok(response));
         });
   }
+
 
   // Obtener todos los clientes sin paginación (para combos o selects)
   @GetMapping("/all")
