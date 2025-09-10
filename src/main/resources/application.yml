@@ -1,8 +1,8 @@
 spring:
   r2dbc:
-    url: r2dbc:postgresql://localhost:5432/silmaurdb
-    username: postgres
-    password: root
+    url: r2dbc:postgresql://dojoserverpg2025.postgres.database.azure.com:5432/silmaurdb
+    username: dojo
+    password: 123456789Da.
 #spring:
 #  r2dbc:
 #    url: r2dbc:postgresql://dpg-d0begqhr0fns73dcqje0-a.oregon-postgres.render.com:5432/silmaurdb
