@@ -3,10 +3,12 @@ package com.silmaur.shop.service.impl;
 import com.silmaur.shop.dto.CustomerDTO;
 import com.silmaur.shop.exception.CustomerNotFoundException;
 import com.silmaur.shop.exception.DocumentIdAlreadyExistsException;
+import com.silmaur.shop.exception.NotFoundException;
 import com.silmaur.shop.handler.mapper.CustomerMapper;
 import com.silmaur.shop.model.Customer;
 import com.silmaur.shop.repository.CustomerRepository;
 import com.silmaur.shop.service.CustomerService;
+import java.math.BigDecimal;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -94,4 +96,29 @@ public class CustomerServiceImpl implements CustomerService {
               .doOnError(e -> log.error("Error al eliminar el cliente con ID: {}", id, e));
         }).then();
   }
+
+  @Override
+  public Mono<CustomerDTO> updateDeposit(Long customerId, BigDecimal amount) {
+    return customerRepository.findById(customerId)
+        .switchIfEmpty(Mono.error(new NotFoundException("Cliente no encontrado")))
+        .flatMap(customer -> {
+          BigDecimal saldoActual = customer.getRemainingDeposit() != null
+              ? customer.getRemainingDeposit()
+              : BigDecimal.ZERO;
+
+          BigDecimal nuevoSaldo = saldoActual.add(amount);
+
+          log.info("💰 [Recarga] Cliente={} | Saldo actual={} | Recarga={} | Nuevo saldo={}",
+              customer.getNickname(), saldoActual, amount, nuevoSaldo);
+
+          // ✅ Igualar ambos campos para mantener consistencia
+          customer.setRemainingDeposit(nuevoSaldo);
+          customer.setInitialDeposit(nuevoSaldo);
+
+          return customerRepository.save(customer);
+        })
+        .map(customerMapper::toDto);
+  }
+
+
 }

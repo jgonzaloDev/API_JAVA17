@@ -94,42 +94,62 @@ public class LiveSessionSaleServiceImpl implements LiveSessionSaleService {
 
             return productRepository.save(product)
                 .flatMap(ignore -> {
+                  // 🔹 Calcular el total de la venta
+                  BigDecimal totalVenta = dto.getUnitPrice().multiply(BigDecimal.valueOf(cantidadVendida));
+
+                  // 🔹 Aplicar saldo del cliente
+                  BigDecimal saldoDisponible = customer.getRemainingDeposit() != null
+                      ? customer.getRemainingDeposit()
+                      : BigDecimal.ZERO;
+                  BigDecimal saldoAplicado = saldoDisponible.min(totalVenta); // solo hasta donde alcance
+                  BigDecimal montoAPagar = totalVenta.subtract(saldoAplicado);
+                  BigDecimal nuevoSaldo = saldoDisponible.subtract(saldoAplicado);
+
+                  log.info("💰 Cliente {} → Total venta: {}, Saldo disponible: {}, Saldo aplicado: {}, A pagar: {}, Nuevo saldo: {}",
+                      customer.getNickname(), totalVenta, saldoDisponible, saldoAplicado, montoAPagar, nuevoSaldo);
+
+                  // 🔹 Crear la venta
                   LiveSessionSale sale = new LiveSessionSale();
                   sale.setLiveSessionId(dto.getLiveSessionId());
                   sale.setProductId(dto.getProductId());
                   sale.setCustomerId(customerId);
                   sale.setQuantity(cantidadVendida);
                   sale.setUnitPrice(dto.getUnitPrice());
-                  sale.setArchived(false); // 🚀 por defecto, no archivada
+                  sale.setArchived(false);
+                  sale.setTotalAmount(totalVenta);       // Total bruto
+                  sale.setRealAmountToPay(montoAPagar);  // ✅ lo que realmente debe pagar
 
                   return repository.save(sale)
                       .flatMap(saved -> {
-                        // 🔹 Calcular el total de la venta
-                        BigDecimal totalVenta = dto.getUnitPrice().multiply(BigDecimal.valueOf(cantidadVendida));
+                        // 🔹 Actualizar saldo del cliente
+                        customer.setRemainingDeposit(nuevoSaldo);
 
-                        // 🔹 Descontar del saldo del cliente
-                        return customerRepository.findById(customerId)
-                            .flatMap(c -> {
-                              BigDecimal nuevoSaldo = c.getRemainingDeposit().subtract(totalVenta);
-                              log.info("💰 Actualizando saldo de cliente {} → {} - {} = {}",
-                                  c.getNickname(), c.getRemainingDeposit(), totalVenta, nuevoSaldo);
-
-                              c.setRemainingDeposit(nuevoSaldo);
-                              return customerRepository.save(c);
-                            })
-                            .then(repository.findById(saved.getId())); // ✅ continuamos con la venta guardada
-                      })
-                      .map(loaded -> {
-                        LiveSessionSaleResponseDTO response = new LiveSessionSaleResponseDTO();
-                        response.setId(loaded.getId());
-                        response.setQuantity(loaded.getQuantity());
-                        response.setUnitPrice(loaded.getUnitPrice());
-                        response.setTotalAmount(loaded.getTotalAmount());
-                        response.setCreatedAt(loaded.getCreatedAt());
-                        response.setProductName("Producto #" + loaded.getProductId());
-                        response.setProductId(loaded.getProductId());
-                        response.setCustomerId(loaded.getCustomerId());
-                        return response;
+                        return customerRepository.save(customer)
+                            .then(repository.findById(saved.getId()))
+                            .flatMap(loaded ->
+                                // 🔹 Enriquecer con datos reales de producto y cliente
+                                Mono.zip(
+                                    productRepository.findById(loaded.getProductId())
+                                        .map(p -> p.getName())
+                                        .defaultIfEmpty("Producto N/A"),
+                                    customerRepository.findById(loaded.getCustomerId())
+                                        .map(c -> c.getNickname())
+                                        .defaultIfEmpty("Cliente N/A")
+                                ).map(tuple -> {
+                                  LiveSessionSaleResponseDTO response = new LiveSessionSaleResponseDTO();
+                                  response.setId(loaded.getId());
+                                  response.setQuantity(loaded.getQuantity());
+                                  response.setUnitPrice(loaded.getUnitPrice());
+                                  response.setTotalAmount(loaded.getTotalAmount());
+                                  response.setRealAmountToPay(loaded.getRealAmountToPay());
+                                  response.setCreatedAt(loaded.getCreatedAt());
+                                  response.setProductName(tuple.getT1()); // ✅ nombre real producto
+                                  response.setProductId(loaded.getProductId());
+                                  response.setCustomerId(loaded.getCustomerId());
+                                  response.setCustomerName(tuple.getT2()); // ✅ nickname real cliente
+                                  return response;
+                                })
+                            );
                       });
                 });
           });
@@ -159,14 +179,48 @@ public class LiveSessionSaleServiceImpl implements LiveSessionSaleService {
 
   @Override
   public Mono<Void> archiveSalesByCustomer(Long liveSessionId, Long customerId) {
-    // 🔹 Marca todas las ventas del cliente como archivadas
+    log.info("📦 Archivando ventas del cliente {} en la sesión {}", customerId, liveSessionId);
+
     return repository.findByLiveSessionIdAndCustomerId(liveSessionId, customerId)
-        .flatMap(sale -> {
-          sale.setArchived(true);
-          return repository.save(sale);
+        .collectList()
+        .flatMapMany(sales -> {
+          if (sales.isEmpty()) {
+            log.warn("⚠️ No se encontraron ventas para cliente {} en sesión {}", customerId, liveSessionId);
+          } else {
+            log.info("📝 Ventas encontradas para archivar ({}): {}",
+                sales.size(),
+                sales.stream().map(s -> s.getId()).toList());
+          }
+
+          return Flux.fromIterable(sales)
+              .flatMap(sale -> {
+                sale.setArchived(true);
+                log.debug("✅ Marcando venta {} como archivada", sale.getId());
+                return repository.save(sale)
+                    .doOnSuccess(saved -> log.debug("💾 Venta {} guardada como archivada", saved.getId()));
+              });
         })
-        .then();
+        .then()
+        .doOnSuccess(v -> log.info("🎉 Ventas archivadas correctamente para cliente {} en sesión {}", customerId, liveSessionId))
+        .doOnError(err -> log.error("❌ Error al archivar ventas del cliente {} en sesión {}", customerId, liveSessionId, err));
   }
+
+  @Override
+  public Mono<Void> deleteSale(Long id) {
+    System.out.println("🛠️ [SERVICE-IMPL] Intentando eliminar venta id=" + id);
+    return repository.findById(id)
+        .doOnNext(sale -> System.out.println("🔍 [DB] Venta encontrada: " + sale))
+        .switchIfEmpty(Mono.defer(() -> {
+          System.err.println("⚠️ [DB] Venta no encontrada con id=" + id);
+          return Mono.error(new RuntimeException("Venta no encontrada con id=" + id));
+        }))
+        .flatMap(sale -> repository.delete(sale)
+            .doOnSuccess(v -> System.out.println("🗑️ [DB] Venta eliminada con id=" + id))
+        );
+  }
+
+
+
 
   private Mono<LiveSessionSaleResponseDTO> mapToResponse(LiveSessionSale sale) {
     Mono<String> customerNameMono = Mono.just("N/A");

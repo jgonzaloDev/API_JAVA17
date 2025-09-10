@@ -34,6 +34,8 @@ public class LiveSessionSale {
 
   @Column("unit_price")
   private BigDecimal unitPrice;
+  @Column("real_amount_to_pay")   // ✅ Nuevo campo
+  private BigDecimal realAmountToPay;
 
   @Column("total_amount")
   @ReadOnlyProperty

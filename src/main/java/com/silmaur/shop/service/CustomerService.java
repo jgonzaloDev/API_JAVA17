@@ -1,6 +1,7 @@
 package com.silmaur.shop.service;
 
 import com.silmaur.shop.dto.CustomerDTO;
+import java.math.BigDecimal;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -10,4 +11,6 @@ public interface CustomerService {
   Mono<CustomerDTO> getCustomerById(Long id);
   Mono<CustomerDTO> updateCustomer(Long id, CustomerDTO customerDto);
   Mono<Void> deleteCustomer(Long id);
+  Mono<CustomerDTO> updateDeposit(Long customerId, BigDecimal amount);
+
 }

@@ -5,6 +5,7 @@ import com.silmaur.shop.dto.OrderDTO;
 import com.silmaur.shop.dto.Response;
 import com.silmaur.shop.handler.mapper.DraftOrderMapper;
 import com.silmaur.shop.service.DraftOrderService;
+import com.silmaur.shop.service.LiveSessionSaleService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
@@ -22,6 +23,8 @@ public class DraftOrderController {
 
   private final DraftOrderService draftOrderService;
   private final DraftOrderMapper draftOrderMapper;
+  private final LiveSessionSaleService liveSessionSaleService;
+
 
   @PostMapping
   public Mono<ResponseEntity<Response<DraftOrderDTO>>> createDraftOrder(@RequestBody DraftOrderDTO draftOrderDTO) {
@@ -54,9 +57,18 @@ public class DraftOrderController {
 
   @PostMapping("/{id}/confirm")
   public Mono<ResponseEntity<Response<OrderDTO>>> confirmDraftOrder(@PathVariable Long id) {
-    return draftOrderService.confirmDraftOrder(id)
+    return draftOrderService.findById(id)  // 1️⃣ obtenemos el draft
+        .flatMap(draft ->
+            draftOrderService.confirmDraftOrder(id)  // 2️⃣ confirmamos el pedido
+                .flatMap(order ->
+                    // 3️⃣ archivamos ventas de este cliente en la sesión
+                    liveSessionSaleService.archiveSalesByCustomer(draft.getLiveSessionId(), draft.getCustomerId())
+                        .thenReturn(order)
+                )
+        )
         .map(order -> ResponseEntity.ok(Response.success("Pedido confirmado", order)));
   }
+
 
   @PatchMapping("/{id}")
   public Mono<ResponseEntity<Response<DraftOrderDTO>>> updateDraftOrder(

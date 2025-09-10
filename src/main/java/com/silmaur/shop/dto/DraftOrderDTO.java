@@ -26,6 +26,8 @@ public class DraftOrderDTO {
   @NotNull(message = "El total es obligatorio")
   private BigDecimal totalAmount;
 
+  private BigDecimal realAmountToPay; // ✅ Nuevo campo
+
   private LocalDateTime createdAt;
   private LocalDateTime completedAt; // 🟢 nuevo
 
@@ -33,3 +35,4 @@ public class DraftOrderDTO {
 
   private List<DraftOrderItemDTO> items;
 }
+

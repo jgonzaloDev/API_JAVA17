@@ -5,6 +5,7 @@ import com.silmaur.shop.dto.Response;
 import com.silmaur.shop.exception.DocumentIdAlreadyExistsException;
 import com.silmaur.shop.service.CustomerService;
 import jakarta.validation.Valid;
+import java.math.BigDecimal;
 import java.util.HashMap;
 import java.util.Map;
 import lombok.AllArgsConstructor;
@@ -116,6 +117,24 @@ public class CustomerController {
         .doOnError(
             e -> log.error("Error al eliminar el cliente con ID: {} en el controlador.", id, e))
         .then();
+  }
+
+  @PostMapping("/{id}/deposit")
+  public Mono<CustomerDTO> updateDeposit(
+      @PathVariable Long id,
+      @RequestParam BigDecimal amount
+  ) {
+    return customerService.updateDeposit(id, amount)
+        .map(customer -> {
+          CustomerDTO dto = new CustomerDTO();
+          dto.setId(customer.getId());
+          dto.setNickname(customer.getNickname());
+          dto.setRemainingDeposit(customer.getRemainingDeposit());
+          dto.setInitialDeposit(customer.getInitialDeposit());
+          dto.setPlatform(customer.getPlatform());
+          dto.setShippingPreference(customer.getShippingPreference());
+          return dto;
+        });
   }
 
   private Map<String, String> createErrorResponse(String errorMessage) {

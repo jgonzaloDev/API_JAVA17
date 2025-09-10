@@ -10,6 +10,8 @@ public interface LiveSessionSaleService {
   Flux<LiveSessionSaleResponseDTO> findBySession(Long liveSessionId);
   Flux<LiveSessionSaleResponseDTO> findAllBySession(Long sessionId);
   Mono<Void> archiveSalesByCustomer(Long liveSessionId, Long customerId);
+  Mono<Void> deleteSale(Long id);
+
 
 }
 

@@ -15,7 +15,8 @@ public class LiveSessionSaleResponseDTO {
   private Long productId;               // ✅ AGREGA ESTA LÍNEA
   private Integer quantity;
   private BigDecimal unitPrice;   // <-- NUEVO: precio unitario
-  private BigDecimal totalAmount;
+  private BigDecimal totalAmount;     // 💰 Total bruto
+  private BigDecimal realAmountToPay; // ✅ Nuevo: monto real a pagar con saldo aplicado
   private String customerName;
   private LocalDateTime createdAt;
   private Long orderId; // si la venta fue enlazada a un pedido

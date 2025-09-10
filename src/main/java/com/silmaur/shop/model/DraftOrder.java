@@ -39,6 +39,9 @@ public class DraftOrder {
 
   @Column("status")
   private String status;
+  @Column("real_amount_to_pay")
+  private BigDecimal realAmountToPay;
+
 
   @Transient
   private List<DraftOrderItem> items; // 🟢 NECESARIO para mapear con MapStruct

@@ -24,7 +24,7 @@ public class LiveSessionSaleController {
   }
 
   /** Ventas visibles (oculta las asociadas a pedidos COMPLETADOS en la sesión) */
-  @GetMapping("/{sessionId}")
+  @GetMapping("/session/{sessionId}")
   public Flux<LiveSessionSaleResponseDTO> list(@PathVariable Long sessionId) {
     return service.findBySession(sessionId);
   }
@@ -43,5 +43,18 @@ public class LiveSessionSaleController {
   ) {
     return service.archiveSalesByCustomer(sessionId, customerId);
   }
+
+  /** Eliminar (o cancelar) una venta específica */
+  /** Eliminar (o cancelar) una venta específica */
+  @DeleteMapping("/sale/{id}")
+  public Mono<Void> delete(@PathVariable Long id) {
+    System.out.println("🗑️ [CONTROLLER] Solicitud DELETE para venta ID=" + id);
+    return service.deleteSale(id)
+        .doOnSubscribe(sub -> System.out.println("➡️ [SERVICE] Eliminando venta id=" + id))
+        .doOnSuccess(v -> System.out.println("✅ [SERVICE] Venta eliminada correctamente id=" + id))
+        .doOnError(err -> System.err.println("❌ [SERVICE] Error eliminando venta id=" + id + " -> " + err.getMessage()));
+  }
+
+
 
 }

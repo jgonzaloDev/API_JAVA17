@@ -195,6 +195,12 @@ public class DraftOrderServiceImpl implements DraftOrderService {
 
 
   @Override
+  public Mono<DraftOrder> findById(Long id) {
+    return draftOrderRepository.findById(id);
+  }
+
+
+  @Override
   public Mono<DraftOrder> updateDraftOrder(Long id, DraftOrderDTO dto) {
     return draftOrderRepository.findById(id)
         .switchIfEmpty(Mono.error(new NotFoundException("Pedido en borrador no encontrado")))

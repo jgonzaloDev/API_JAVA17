@@ -13,6 +13,8 @@ public interface DraftOrderService {
   Mono<Void> updateStatus(Long id, String status);
   Mono<OrderDTO> confirmDraftOrder(Long draftOrderId);
   Mono<DraftOrder> updateDraftOrder(Long id, DraftOrderDTO draftOrderDTO);
+  Mono<DraftOrder> findById(Long id);
+
 
 
 }
